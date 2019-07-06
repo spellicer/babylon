@@ -4,7 +4,9 @@ module.exports = {
     entry: './index.ts',
     devServer: {
         host: '0.0.0.0',
-        disableHostCheck: true
+        disableHostCheck: true,
+        https: true,
+        hot: true
     },
     output: {
         filename: 'index.js',

@@ -1,4 +1,4 @@
-import { AbstractMesh, ArcRotateCamera, Color3, CubeTexture, Engine, Mesh, PointLight, Scene, StandardMaterial, Texture, Vector3, MeshBuilder } from "babylonjs";
+import { AbstractMesh, ArcRotateCamera, Color3, CubeTexture, Engine, Mesh, PointLight, Scene, StandardMaterial, Texture, Vector3, MeshBuilder, DeviceOrientationCamera } from "babylonjs";
 import { AdvancedDynamicTexture, Control, Rectangle, TextBlock } from "babylonjs-gui";
 let advancedTexture: AdvancedDynamicTexture;
 // const location = new Vector3(-84.3308225, 0, 33.7275937);
@@ -59,11 +59,6 @@ const engine = new Engine(canvas, true);
 function createScene(): Scene {
     var scene = new Scene(engine);
 
-    // Light
-    var spot = new PointLight("spot", new Vector3(0, 400, 10), scene);
-    spot.diffuse = new Color3(1, 1, 1);
-    spot.specular = new Color3(0, 0, 0);
-
     // Ground
     var groundMaterial = new StandardMaterial("ground", scene);
     groundMaterial.diffuseTexture = new Texture("textures/terrain.png", scene);
@@ -80,41 +75,19 @@ function createScene(): Scene {
     const ZMAX = 33.7710719608696;
     const ZMIN = 33.6841154391304;
     const position = new Vector3();
-    scene.registerBeforeRender(function () {
-        position.x = (location.x - XMIN)/(XMAX-XMIN)*(IMAX-IMIN)+IMIN;
-        position.z = (location.z - ZMIN)/(ZMAX-ZMIN)*(JMAX-JMIN)+JMIN;
-        position.y = location.y = ground.getHeightAtCoordinates(position.x, position.z);
-    });
 
     const sphere = MeshBuilder.CreateSphere("sphere", { diameter: 1, segments: 32 }, scene);
-    scene.registerBeforeRender(function () {
-        sphere.position = position;
-    });
     const labelText = addLabelToMesh(sphere);
     const locationText = addLocationToMesh(sphere);
-    scene.registerBeforeRender(function () {
-        locationText.text = `${location.x.toFixed(6)}, ${location.y.toFixed(6)}, ${location.z.toFixed(6)}`;
-    });
 
-    // Camera
-    var camera = new ArcRotateCamera("Camera", 0, 1.2, 50, position, scene);
-    camera.lowerBetaLimit = 0.1;
-    camera.upperBetaLimit = (Math.PI / 2) * 0.9;
-    camera.lowerRadiusLimit = 20;
-    camera.upperRadiusLimit = 100;
+    // Parameters : name, position, scene
+    var camera = new DeviceOrientationCamera("DevOr_camera", sphere.position, scene);
+
+    // Sets the sensitivity of the camera to movement and rotation
+    camera.angularSensibility = 10;
+
+    // Attach the camera to the canvas
     camera.attachControl(canvas, true);
-    scene.registerBeforeRender(function () {
-        camera.target = sphere.position;
-    });
-    scene.registerBeforeRender(function () {
-        labelText.text = `${camera.alpha.toFixed(2)}, ${camera.beta.toFixed(2)}, ${camera.rotation}`;
-    });
-
-    //Sphere to see the light's position
-    const sunMat = new StandardMaterial("sun", scene);
-    sunMat.emissiveColor = new Color3(1, 1, 0);
-    const sun = Mesh.CreateSphere("sun", 10, 4, scene);
-    sun.material = sunMat;
 
     // Skybox
     var skybox = Mesh.CreateBox("skyBox", 800.0, scene);
@@ -127,14 +100,26 @@ function createScene(): Scene {
     skyboxMaterial.disableLighting = true;
     skybox.material = skyboxMaterial;
 
-    //Sun animation
-    scene.registerBeforeRender(function () {
-        sun.position = spot.position;
-        spot.position.x -= 0.5;
-        if (spot.position.x < -90)
-            spot.position.x = 100;
-    });
+    // Light
+    var spot = new PointLight("spot", new Vector3(0, 400, 10), scene);
+    spot.diffuse = new Color3(1, 1, 1);
+    spot.specular = new Color3(0, 0, 0);
 
+    //Sphere to see the light's position
+    const sunMat = new StandardMaterial("sun", scene);
+    sunMat.emissiveColor = new Color3(1, 1, 0);
+    const sun = Mesh.CreateSphere("sun", 10, 4, scene);
+    sun.material = sunMat;
+    sun.position = spot.position;
+
+    scene.registerBeforeRender(function () {
+        position.x = (location.x - XMIN)/(XMAX-XMIN)*(IMAX-IMIN)+IMIN;
+        position.z = (location.z - ZMIN)/(ZMAX-ZMIN)*(JMAX-JMIN)+JMIN;
+        position.y = location.y = ground.getHeightAtCoordinates(position.x, position.z)+5;
+        locationText.text = `${position.x.toFixed(6)}, ${position.y.toFixed(6)}, ${position.z.toFixed(6)}`;
+        sphere.position = position;
+        camera.position = sphere.position;
+    });
     return scene;
 }
 setInterval(()=> {
@@ -142,7 +127,7 @@ setInterval(()=> {
         location.x = position.coords.longitude;
         location.z = position.coords.latitude;
     })
-}, 5000);
+}, 1000);
 const scene = createScene();
 engine.runRenderLoop(() => {
     scene.render();
