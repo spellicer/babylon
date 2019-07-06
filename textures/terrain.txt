@@ -1,0 +1,70 @@
+'HeightmapGenerator.exe' (CLR v4.0.30319: DefaultDomain): Loaded 'C:\Windows\Microsoft.Net\assembly\GAC_32\mscorlib\v4.0_4.0.0.0__b77a5c561934e089\mscorlib.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'HeightmapGenerator.exe' (CLR v4.0.30319: DefaultDomain): Loaded 'C:\Users\spellicer\source\github\spellicer\heightmap-generator\HeightmapGenerator\HeightmapGenerator\bin\Debug\HeightmapGenerator.exe'. Symbols loaded.
+'HeightmapGenerator.exe' (CLR v4.0.30319: HeightmapGenerator.exe): Loaded 'C:\Windows\Microsoft.Net\assembly\GAC_MSIL\System\v4.0_4.0.0.0__b77a5c561934e089\System.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'HeightmapGenerator.exe' (CLR v4.0.30319: HeightmapGenerator.exe): Loaded 'C:\Users\spellicer\source\github\spellicer\heightmap-generator\HeightmapGenerator\HeightmapGenerator\bin\Debug\Newtonsoft.Json.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'HeightmapGenerator.exe' (CLR v4.0.30319: HeightmapGenerator.exe): Loaded 'C:\Windows\Microsoft.Net\assembly\GAC_MSIL\System.Core\v4.0_4.0.0.0__b77a5c561934e089\System.Core.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'HeightmapGenerator.exe' (CLR v4.0.30319: HeightmapGenerator.exe): Loaded 'C:\Windows\Microsoft.Net\assembly\GAC_MSIL\Microsoft.CSharp\v4.0_4.0.0.0__b03f5f7f11d50a3a\Microsoft.CSharp.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'HeightmapGenerator.exe' (CLR v4.0.30319: HeightmapGenerator.exe): Loaded 'C:\Windows\Microsoft.Net\assembly\GAC_MSIL\System.Configuration\v4.0_4.0.0.0__b03f5f7f11d50a3a\System.Configuration.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'HeightmapGenerator.exe' (CLR v4.0.30319: HeightmapGenerator.exe): Loaded 'C:\Windows\Microsoft.Net\assembly\GAC_MSIL\System.Xml\v4.0_4.0.0.0__b77a5c561934e089\System.Xml.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+33.7710719608696, -84.3743007608696, 33.6841154391304, -84.2873442391304
+Distance Between Points is 8.50014875260338E-05.
+'HeightmapGenerator.exe' (CLR v4.0.30319: HeightmapGenerator.exe): Loaded 'C:\Windows\Microsoft.Net\assembly\GAC_MSIL\System.Numerics\v4.0_4.0.0.0__b77a5c561934e089\System.Numerics.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'HeightmapGenerator.exe' (CLR v4.0.30319: HeightmapGenerator.exe): Loaded 'C:\Windows\Microsoft.Net\assembly\GAC_MSIL\System.Dynamic\v4.0_4.0.0.0__b03f5f7f11d50a3a\System.Dynamic.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'HeightmapGenerator.exe' (CLR v4.0.30319: HeightmapGenerator.exe): Loaded 'Anonymously Hosted DynamicMethods Assembly'. 
+'HeightmapGenerator.exe' (CLR v4.0.30319: HeightmapGenerator.exe): Loaded 'C:\Windows\Microsoft.Net\assembly\GAC_32\System.Data\v4.0_4.0.0.0__b77a5c561934e089\System.Data.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+Max: 264, Min: 230. i: 0. Diff: 34
+Max: 266, Min: 230. i: 20. Diff: 36
+Max: 266, Min: 230. i: 40. Diff: 36
+Max: 266, Min: 230. i: 60. Diff: 36
+Max: 270, Min: 230. i: 80. Diff: 40
+Max: 276, Min: 230. i: 100. Diff: 46
+Max: 284, Min: 230. i: 120. Diff: 54
+Max: 290, Min: 230. i: 140. Diff: 60
+Max: 296, Min: 230. i: 160. Diff: 66
+Max: 296, Min: 230. i: 180. Diff: 66
+Max: 300, Min: 230. i: 200. Diff: 70
+Max: 304, Min: 230. i: 220. Diff: 74
+Max: 304, Min: 230. i: 240. Diff: 74
+Max: 306, Min: 230. i: 260. Diff: 76
+Max: 306, Min: 230. i: 280. Diff: 76
+Max: 310, Min: 230. i: 300. Diff: 80
+Max: 312, Min: 230. i: 320. Diff: 82
+Max: 312, Min: 230. i: 340. Diff: 82
+Max: 312, Min: 230. i: 360. Diff: 82
+Max: 314, Min: 230. i: 380. Diff: 84
+Max: 314, Min: 230. i: 400. Diff: 84
+Max: 314, Min: 230. i: 420. Diff: 84
+Max: 314, Min: 230. i: 440. Diff: 84
+Max: 314, Min: 230. i: 460. Diff: 84
+Max: 314, Min: 230. i: 480. Diff: 84
+Max: 315, Min: 230. i: 500. Diff: 85
+Max: 315, Min: 230. i: 520. Diff: 85
+Max: 318, Min: 230. i: 540. Diff: 88
+Max: 318, Min: 230. i: 560. Diff: 88
+Max: 318, Min: 230. i: 580. Diff: 88
+Max: 318, Min: 230. i: 600. Diff: 88
+Max: 318, Min: 230. i: 620. Diff: 88
+Max: 318, Min: 230. i: 640. Diff: 88
+Max: 318, Min: 230. i: 660. Diff: 88
+Max: 321, Min: 230. i: 680. Diff: 91
+Max: 321, Min: 230. i: 700. Diff: 91
+Max: 321, Min: 230. i: 720. Diff: 91
+Max: 321, Min: 230. i: 740. Diff: 91
+Max: 324, Min: 230. i: 760. Diff: 94
+Max: 324, Min: 230. i: 780. Diff: 94
+Max: 324, Min: 230. i: 800. Diff: 94
+Max: 324, Min: 230. i: 820. Diff: 94
+Max: 324, Min: 230. i: 840. Diff: 94
+Max: 324, Min: 230. i: 860. Diff: 94
+Max: 324, Min: 230. i: 880. Diff: 94
+Max: 324, Min: 230. i: 900. Diff: 94
+Max: 324, Min: 230. i: 920. Diff: 94
+Max: 327, Min: 230. i: 940. Diff: 97
+Max: 327, Min: 230. i: 960. Diff: 97
+Max: 327, Min: 230. i: 980. Diff: 97
+Max: 327, Min: 230. i: 1000. Diff: 97
+Max: 327, Min: 230. i: 1020. Diff: 97
+heights has 1048576 members.
+'HeightmapGenerator.exe' (CLR v4.0.30319: HeightmapGenerator.exe): Loaded 'C:\Windows\Microsoft.Net\assembly\GAC_MSIL\System.Drawing\v4.0_4.0.0.0__b03f5f7f11d50a3a\System.Drawing.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+The program '[14716] HeightmapGenerator.exe: Program Trace' has exited with code 0 (0x0).
+The program '[14716] HeightmapGenerator.exe' has exited with code 0 (0x0).
