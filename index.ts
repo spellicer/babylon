@@ -1,18 +1,23 @@
-import { AbstractMesh, ArcRotateCamera, Color3, CubeTexture, Engine, Mesh, PointLight, Scene, StandardMaterial, Texture, Vector3, MeshBuilder, DeviceOrientationCamera } from "babylonjs";
-import { AdvancedDynamicTexture, Control, Rectangle, TextBlock } from "babylonjs-gui";
+import { Color3, CubeTexture, DeviceOrientationCamera, Engine, Mesh, MeshBuilder, PointLight, Scene, StandardMaterial, Texture, Vector3, Material } from "babylonjs";
+import { AdvancedDynamicTexture, Control, Rectangle, TextBlock, Button } from "babylonjs-gui";
 let advancedTexture: AdvancedDynamicTexture;
-// const location = new Vector3(-84.3308225, 0, 33.7275937);
+const IMIN = -512;
+const IMAX = 512;
+const JMIN = -512;
+const JMAX = 512;
+const XMAX = -84.2873442391304;
+const XMIN = -84.3743007608696;
+const ZMAX = 33.7710719608696;
+const ZMIN = 33.6841154391304;
+const position = new Vector3();
 const location = new Vector3(0, 0, 0);
-function init(): void {
-    if (!advancedTexture) {
-        advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("ui1");
-    }
-}
-function addLocationToMesh(mesh: AbstractMesh): TextBlock {
-    if (!advancedTexture) {
-        init();
-    }
-    let label: Rectangle = new Rectangle("location for " + mesh.name);
+const canvas = <HTMLCanvasElement>document.getElementById("renderCanvas");
+const engine = new Engine(canvas, true);
+function createScene(): Scene {
+    var scene = new Scene(engine);
+
+    advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("ui1");
+    const label: Rectangle = new Rectangle("location");
     label.background = "black";
     label.height = "100px";
     label.alpha = 0.5;
@@ -20,74 +25,48 @@ function addLocationToMesh(mesh: AbstractMesh): TextBlock {
     label.cornerRadius = 20;
     label.thickness = 1;
     label.linkOffsetY = 30;
-    label.top = "20%";
+    label.top = "5%";
     label.zIndex = 5;
     label.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
     advancedTexture.addControl(label);
 
-    const text = new TextBlock();
-    text.fontSize = 30;
-    text.color = "white";
-    label.addControl(text);
-    return text;
-}
-function addLabelToMesh(mesh: AbstractMesh): TextBlock {
-    if (!advancedTexture) {
-        init();
-    }
-    let label: Rectangle = new Rectangle("label for " + mesh.name);
-    label.background = "black";
-    label.height = "100px";
-    label.alpha = 0.5;
-    label.width = "400px";
-    label.cornerRadius = 20;
-    label.thickness = 1;
-    label.linkOffsetY = 30;
-    label.top = "10%";
-    label.zIndex = 5;
-    label.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-    advancedTexture.addControl(label);
+    const locationText = new TextBlock();
+    locationText.fontSize = 30;
+    locationText.color = "white";
+    label.addControl(locationText);
 
-    const text = new TextBlock();
-    text.fontSize = 30;
-    text.color = "white";
-    label.addControl(text);
-    return text;
-}
-const canvas = <HTMLCanvasElement>document.getElementById("renderCanvas");
-const engine = new Engine(canvas, true);
-function createScene(): Scene {
-    var scene = new Scene(engine);
+    const button = Button.CreateSimpleButton("button", "sphere");
+    button.width = "100px";
+    button.height = "50px";
+    button.left = "45%";
+    button.top = "45%";
+    button.zIndex = 10;
+    advancedTexture.addControl(button);
 
     // Ground
     var groundMaterial = new StandardMaterial("ground", scene);
     groundMaterial.diffuseTexture = new Texture("textures/terrain.png", scene);
 
-    var ground = Mesh.CreateGroundFromHeightMap("ground", "textures/terrain.png", 1024, 1024, 1024, 230, 327, scene, false);
+    const ground = Mesh.CreateGroundFromHeightMap("ground", "textures/terrain.png", 1024, 1024, 1024, 230, 327, scene, false);
     ground.material = groundMaterial;
 
-    const IMIN = -512;
-    const IMAX = 512;
-    const JMIN = -512;
-    const JMAX = 512;
-    const XMAX = -84.2873442391304;
-    const XMIN = -84.3743007608696;
-    const ZMAX = 33.7710719608696;
-    const ZMIN = 33.6841154391304;
-    const position = new Vector3();
-
-    const sphere = MeshBuilder.CreateSphere("sphere", { diameter: 1, segments: 32 }, scene);
-    const labelText = addLabelToMesh(sphere);
-    const locationText = addLocationToMesh(sphere);
-
     // Parameters : name, position, scene
-    var camera = new DeviceOrientationCamera("DevOr_camera", sphere.position, scene);
+    const camera = new DeviceOrientationCamera("DevOr_camera", position, scene);
 
     // Sets the sensitivity of the camera to movement and rotation
     camera.angularSensibility = 10;
 
     // Attach the camera to the canvas
     camera.attachControl(canvas, true);
+
+    button.onPointerClickObservable.add(() => {
+        const material = new StandardMaterial("sphereMat", scene);
+        material.alpha = 1;
+        material.diffuseColor = new Color3(Math.random() * 2, Math.random() * 2, Math.random() * 2);
+        const sphere = MeshBuilder.CreateSphere("sphere", { diameter: 4, segments: 32 }, scene);
+        sphere.material = material;
+        sphere.position.copyFrom(camera.position);
+    });
 
     // Skybox
     var skybox = Mesh.CreateBox("skyBox", 800.0, scene);
@@ -113,22 +92,27 @@ function createScene(): Scene {
     sun.position = spot.position;
 
     scene.registerBeforeRender(function () {
-        position.x = (location.x - XMIN)/(XMAX-XMIN)*(IMAX-IMIN)+IMIN;
-        position.z = (location.z - ZMIN)/(ZMAX-ZMIN)*(JMAX-JMIN)+JMIN;
-        position.y = location.y = ground.getHeightAtCoordinates(position.x, position.z)+5;
-        locationText.text = `${position.x.toFixed(6)}, ${position.y.toFixed(6)}, ${position.z.toFixed(6)}`;
-        sphere.position = position;
-        camera.position = sphere.position;
+        position.y = ground.getHeightAtCoordinates(position.x, position.z) + 5 || 300;
+        camera.position = position;
+        locationText.text = `${camera.position.x.toFixed(6)}, ${camera.position.y.toFixed(6)}, ${camera.position.z.toFixed(6)}`;
     });
     return scene;
 }
-setInterval(()=> {
-    navigator.geolocation.getCurrentPosition(position=> {
-        location.x = position.coords.longitude;
-        location.z = position.coords.latitude;
-    })
-}, 1000);
 const scene = createScene();
+scene.executeWhenReady(() => {
+    navigator.geolocation.watchPosition(
+        moveTo => {
+            location.x = moveTo.coords.longitude;
+            location.z = moveTo.coords.latitude;
+            position.x = (location.x - XMIN) / (XMAX - XMIN) * (IMAX - IMIN) + IMIN;
+            position.z = (location.z - ZMIN) / (ZMAX - ZMIN) * (JMAX - JMIN) + JMIN;
+        },
+        undefined,
+        {
+            enableHighAccuracy: true,
+            maximumAge: 500
+        });
+});
 engine.runRenderLoop(() => {
     scene.render();
 });
