@@ -9,10 +9,9 @@ const XMAX = -84.2873442391304;
 const XMIN = -84.3743007608696;
 const ZMAX = 33.7710719608696;
 const ZMIN = 33.6841154391304;
-const position = new Vector3();
-const location = new Vector3(0, 0, 0);
 const canvas = <HTMLCanvasElement>document.getElementById("renderCanvas");
 const engine = new Engine(canvas, true);
+let camera: DeviceOrientationCamera;
 function createScene(): Scene {
     var scene = new Scene(engine);
 
@@ -36,11 +35,11 @@ function createScene(): Scene {
     label.addControl(locationText);
 
     const button = Button.CreateSimpleButton("button", "sphere");
-    button.width = "100px";
-    button.height = "50px";
-    button.left = "45%";
+    button.width = "33%";
+    button.height = "5%";
     button.top = "45%";
     button.zIndex = 10;
+    button.color = "white";
     advancedTexture.addControl(button);
 
     // Ground
@@ -51,7 +50,7 @@ function createScene(): Scene {
     ground.material = groundMaterial;
 
     // Parameters : name, position, scene
-    const camera = new DeviceOrientationCamera("DevOr_camera", position, scene);
+    camera = new DeviceOrientationCamera("DevOr_camera", Vector3.Zero(), scene);
 
     // Sets the sensitivity of the camera to movement and rotation
     camera.angularSensibility = 10;
@@ -92,8 +91,7 @@ function createScene(): Scene {
     sun.position = spot.position;
 
     scene.registerBeforeRender(function () {
-        position.y = ground.getHeightAtCoordinates(position.x, position.z) + 5 || 300;
-        camera.position = position;
+        camera.position.y = ground.getHeightAtCoordinates(camera.position.x, camera.position.z) + 5 || 300;
         locationText.text = `${camera.position.x.toFixed(6)}, ${camera.position.y.toFixed(6)}, ${camera.position.z.toFixed(6)}`;
     });
     return scene;
@@ -102,10 +100,8 @@ const scene = createScene();
 scene.executeWhenReady(() => {
     navigator.geolocation.watchPosition(
         moveTo => {
-            location.x = moveTo.coords.longitude;
-            location.z = moveTo.coords.latitude;
-            position.x = (location.x - XMIN) / (XMAX - XMIN) * (IMAX - IMIN) + IMIN;
-            position.z = (location.z - ZMIN) / (ZMAX - ZMIN) * (JMAX - JMIN) + JMIN;
+            camera.position.x = (moveTo.coords.longitude - XMIN) / (XMAX - XMIN) * (IMAX - IMIN) + IMIN;
+            camera.position.z = (moveTo.coords.latitude - ZMIN) / (ZMAX - ZMIN) * (JMAX - JMIN) + JMIN;
         },
         undefined,
         {
