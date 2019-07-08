@@ -1,5 +1,6 @@
-import { Color3, CubeTexture, DeviceOrientationCamera, Engine, Mesh, MeshBuilder, PointLight, Scene, StandardMaterial, Texture, Vector3, Material } from "babylonjs";
+import { Color3, CubeTexture, DeviceOrientationCamera, Engine, Mesh, MeshBuilder, PointLight, Scene, StandardMaterial, Texture, Vector3, Material, SceneLoader } from "babylonjs";
 import { AdvancedDynamicTexture, Control, Rectangle, TextBlock, Button } from "babylonjs-gui";
+import "babylonjs-loaders";
 let advancedTexture: AdvancedDynamicTexture;
 const IMIN = -512;
 const IMAX = 512;
@@ -44,9 +45,9 @@ function createScene(): Scene {
 
     // Ground
     var groundMaterial = new StandardMaterial("ground", scene);
-    groundMaterial.diffuseTexture = new Texture("textures/terrain.png", scene);
+    groundMaterial.diffuseTexture = new Texture("terrain.png", scene);
 
-    const ground = Mesh.CreateGroundFromHeightMap("ground", "textures/terrain.png", 1024, 1024, 1024, 230, 327, scene, false);
+    const ground = Mesh.CreateGroundFromHeightMap("ground", "terrain.png", 1024, 1024, 1024, 230, 327, scene, false);
     ground.material = groundMaterial;
 
     // Parameters : name, position, scene
@@ -71,7 +72,7 @@ function createScene(): Scene {
     var skybox = Mesh.CreateBox("skyBox", 800.0, scene);
     var skyboxMaterial = new StandardMaterial("skyBox", scene);
     skyboxMaterial.backFaceCulling = false;
-    skyboxMaterial.reflectionTexture = new CubeTexture("textures/skybox", scene);
+    skyboxMaterial.reflectionTexture = new CubeTexture("skybox", scene);
     skyboxMaterial.reflectionTexture.coordinatesMode = Texture.SKYBOX_MODE;
     skyboxMaterial.diffuseColor = new Color3(0, 0, 0);
     skyboxMaterial.specularColor = new Color3(0, 0, 0);
@@ -93,7 +94,12 @@ function createScene(): Scene {
     scene.registerBeforeRender(function () {
         camera.position.y = ground.getHeightAtCoordinates(camera.position.x, camera.position.z) + 5 || 300;
         locationText.text = `${camera.position.x.toFixed(6)}, ${camera.position.y.toFixed(6)}, ${camera.position.z.toFixed(6)}`;
+        const mesh = scene.getMeshByName("__root__");
+        if(mesh !== null) {
+            mesh.position.y = ground.getHeightAtCoordinates(mesh.position.x, mesh.position.z) + 2;
+        }
     });
+    SceneLoader.ImportMesh(["root"], "litterbug/eb6955c383465998397b08af01000e0e/", "scene.glb", scene);
     return scene;
 }
 const scene = createScene();
