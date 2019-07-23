@@ -1,7 +1,8 @@
-import { Color3, CubeTexture, DeviceOrientationCamera, Engine, Mesh, MeshBuilder, PointLight, Scene, StandardMaterial, Texture, Vector3, Material, SceneLoader } from "babylonjs";
-import { AdvancedDynamicTexture, Control, Rectangle, TextBlock, Button } from "babylonjs-gui";
-import "babylonjs-loaders";
-let advancedTexture: AdvancedDynamicTexture;
+import { Color3, CubeTexture, DeviceOrientationCamera, Engine, Mesh, MeshBuilder, PointLight, Scene, SceneLoader, SceneSerializer, StandardMaterial, Texture, Vector3 } from "babylonjs";
+import { AdvancedDynamicTexture, Button, Control, Rectangle, TextBlock } from "babylonjs-gui";
+import PouchDB from "pouchdb";
+const remoteDB = new PouchDB(`${window.location}/litterbug`);
+const localDB = new PouchDB("litterbug");
 const IMIN = -512;
 const IMAX = 512;
 const JMIN = -512;
@@ -14,9 +15,9 @@ const canvas = <HTMLCanvasElement>document.getElementById("renderCanvas");
 const engine = new Engine(canvas, true);
 let camera: DeviceOrientationCamera;
 function createScene(): Scene {
-    var scene = new Scene(engine);
+    const scene = new Scene(engine);
 
-    advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("ui1");
+    const advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("ui1");
     const label: Rectangle = new Rectangle("location");
     label.background = "black";
     label.height = "100px";
@@ -47,7 +48,12 @@ function createScene(): Scene {
     var groundMaterial = new StandardMaterial("ground", scene);
     groundMaterial.diffuseTexture = new Texture("terrain.png", scene);
 
-    const ground = Mesh.CreateGroundFromHeightMap("ground", "terrain.png", 1024, 1024, 1024, 230, 327, scene, false);
+    const ground = MeshBuilder.CreateGroundFromHeightMap(
+        "ground",
+        "terrain.png",
+        { width: 1024, height: 1024, subdivisions: 1024, minHeight: 230, maxHeight: 327, updatable: true },
+        scene
+    );
     ground.material = groundMaterial;
 
     // Parameters : name, position, scene
@@ -66,6 +72,8 @@ function createScene(): Scene {
         const sphere = MeshBuilder.CreateSphere("sphere", { diameter: 4, segments: 32 }, scene);
         sphere.material = material;
         sphere.position.copyFrom(camera.position);
+        localDB.post(SceneSerializer.SerializeMesh(sphere));
+        localDB.replicate.to(remoteDB);
     });
 
     // Skybox
@@ -94,12 +102,7 @@ function createScene(): Scene {
     scene.registerBeforeRender(function () {
         camera.position.y = ground.getHeightAtCoordinates(camera.position.x, camera.position.z) + 5 || 300;
         locationText.text = `${camera.position.x.toFixed(6)}, ${camera.position.y.toFixed(6)}, ${camera.position.z.toFixed(6)}`;
-        const mesh = scene.getMeshByName("__root__");
-        if(mesh !== null) {
-            mesh.position.y = ground.getHeightAtCoordinates(mesh.position.x, mesh.position.z) + 2;
-        }
     });
-    SceneLoader.ImportMesh(["root"], "litterbug/eb6955c383465998397b08af01000e0e/", "scene.glb", scene);
     return scene;
 }
 const scene = createScene();
@@ -114,7 +117,28 @@ scene.executeWhenReady(() => {
             enableHighAccuracy: true,
             maximumAge: 500
         });
+    engine.runRenderLoop(() => {
+        scene.render();
+    });
 });
-engine.runRenderLoop(() => {
-    scene.render();
-});
+async function litterbugList() {
+    console.log("litterbugging");
+    try {
+        await localDB.replicate.from(remoteDB);
+        const allDocs = await localDB.allDocs();
+        console.log("loaded all docs");
+        allDocs.rows
+            .filter(row => !(<string>row.id).startsWith("_design"))
+            .forEach(async row => {
+                console.log(`loading ${row.id}`);
+                const doc: any = await localDB.get(row.id);
+                if (doc.meshes) {
+                    console.log(`loaded ${JSON.stringify(doc.meshes[0].position)}`);
+                }
+                SceneLoader.ImportMesh("", `data:application/json,${JSON.stringify(doc)}`, "", scene);
+            });
+    } catch (err) {
+        console.error(err);
+    }
+}
+litterbugList();

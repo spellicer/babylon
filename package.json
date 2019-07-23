@@ -5,10 +5,13 @@
   "main": "index.js",
   "dependencies": {},
   "devDependencies": {
+    "@types/pouchdb": "~6.4.0",
     "babylonjs": "~4.0.3",
     "babylonjs-gui": "~4.0.3",
     "babylonjs-loaders": "~4.0.3",
     "babylonjs-materials": "~4.0.3",
+    "babylonjs-serializers": "~4.0.3",
+    "pouchdb": "~7.1.1",
     "ts-loader": "~6.0.4",
     "typescript": "~3.5.2",
     "webpack": "~4.35.2",
