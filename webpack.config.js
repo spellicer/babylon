@@ -1,18 +1,27 @@
 const path = require("path");
 const local = require("./webpack.local");
+const WorkboxWebpackPlugin = require("workbox-webpack-plugin");
 
 module.exports = {
-    entry: './index.ts',
+    entry: {
+        index: './index.ts'
+    },
     devServer: {
         contentBase: path.resolve(__dirname, 'static'),
         proxy: local,
         host: '0.0.0.0',
         disableHostCheck: true,
-        https: true,
+        https: false,
         hot: true
     },
+    plugins: [
+        new WorkboxWebpackPlugin.InjectManifest({
+            swSrc: "./sw.ts",
+            swDest: "sw.js"
+        })
+    ],
     output: {
-        filename: 'index.js',
+        filename: '[name].js',
         path: path.resolve(__dirname, 'dist')
     },
     resolve: {

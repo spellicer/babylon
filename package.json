@@ -6,17 +6,23 @@
   "dependencies": {},
   "devDependencies": {
     "@types/pouchdb": "~6.4.0",
+    "@types/workbox-sw": "~4.2.0",
+    "@types/workbox-window": "~4.3.2",
     "babylonjs": "~4.0.3",
     "babylonjs-gui": "~4.0.3",
     "babylonjs-loaders": "~4.0.3",
     "babylonjs-materials": "~4.0.3",
     "babylonjs-serializers": "~4.0.3",
     "pouchdb": "~7.1.1",
+    "rxjs": "~6.5.3",
     "ts-loader": "~6.0.4",
     "typescript": "~3.5.2",
     "webpack": "~4.35.2",
     "webpack-cli": "~3.3.5",
-    "webpack-dev-server": "~3.7.2"
+    "webpack-dev-server": "~3.7.2",
+    "workbox-sw": "~4.3.1",
+    "workbox-webpack-plugin": "~4.3.1",
+    "workbox-window": "~4.3.1"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
