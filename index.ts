@@ -25,20 +25,25 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 if ('serviceWorker' in navigator) {
-    console.log('registering service worker');
-    const wb = new Workbox("./sw.js");
-    wb.addEventListener("message", (event) => {
+    const wb = new Workbox('/sw.js');
+    wb.addEventListener('controlling', (event) => {
         console.log(event);
+        const message = new MessageChannel();
+        message.port1.onmessage = (event) => {
+            console.log(event);
+        }
+        wb.messageSW(message);
     });
-    wb.addEventListener('activated', (event) => {
-        console.log("Service worker activated");
+    wb.addEventListener('message', (event) => {
+        if (event.data.type === 'CACHE_UPDATED') {
+            const { updatedURL } = event.data.payload;
+
+            console.log(`A newer version of ${updatedURL} is available!`);
+        }
     });
-    wb.register()
-        .then(() => {
-            console.log('Service worker registered!');
-        })
-        .catch((err) => {
-            console.log(err);
-        });
-    wb.messageSW("a message").then(console.log);
+    wb.register();
+    const swVersion = wb.messageSW({ type: 'GET_VERSION' });
+    swVersion.then(message => {
+        console.log('Service Worker version:', message);
+    });
 }

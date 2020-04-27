@@ -17,7 +17,8 @@ module.exports = {
     plugins: [
         new WorkboxWebpackPlugin.InjectManifest({
             swSrc: "./sw.ts",
-            swDest: "sw.js"
+            swDest: "sw.js",
+            maximumFileSizeToCacheInBytes: 5242880,
         })
     ],
     output: {
