@@ -13,6 +13,7 @@
     "babylonjs-loaders": "~4.1.0",
     "babylonjs-materials": "~4.1.0",
     "babylonjs-serializers": "~4.1.0",
+    "copy-webpack-plugin": "^5.1.1",
     "pouchdb": "~7.2.1",
     "rxjs": "~6.5.5",
     "ts-loader": "~7.0.1",

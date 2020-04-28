@@ -1,13 +1,13 @@
 const path = require("path");
 const local = require("./webpack.local");
 const WorkboxWebpackPlugin = require("workbox-webpack-plugin");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 module.exports = {
     entry: {
         index: './index.ts'
     },
     devServer: {
-        contentBase: path.resolve(__dirname, 'static'),
         proxy: local,
         host: '0.0.0.0',
         disableHostCheck: true,
@@ -15,11 +15,12 @@ module.exports = {
         hot: true
     },
     plugins: [
+        new CopyWebpackPlugin([{ from: "static" }]),
         new WorkboxWebpackPlugin.InjectManifest({
             swSrc: "./sw.ts",
             swDest: "sw.js",
             maximumFileSizeToCacheInBytes: 5242880,
-        })
+        }),
     ],
     output: {
         filename: '[name].js',
