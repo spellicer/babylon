@@ -5,11 +5,7 @@
 // Caching strategies: https://developers.google.com/web/tools/workbox/modules/workbox-strategies#stale-while-revalidate
 // Example: https://github.com/JeremieLitzler/mws.nd.2018.s3/blob/master/sw.js
 
-import { CacheableResponsePlugin } from "workbox-cacheable-response";
-import { ExpirationPlugin } from "workbox-expiration";
-import { precacheAndRoute, cleanupOutdatedCaches, createHandlerBoundToURL } from "workbox-precaching";
-import { registerRoute, NavigationRoute } from "workbox-routing";
-import { NetworkFirst, NetworkOnly, StaleWhileRevalidate, CacheFirst } from "workbox-strategies";
+import { cleanupOutdatedCaches, precacheAndRoute } from "workbox-precaching";
 
 declare const self: any;
 
@@ -18,14 +14,10 @@ const componentName = "Service Worker";
 // Enable debug mode during development
 const DEBUG_MODE = location.hostname.endsWith(".app.local") || location.hostname === "localhost";
 
-const DAY_IN_SECONDS = 24 * 60 * 60;
-const MONTH_IN_SECONDS = DAY_IN_SECONDS * 30;
-const YEAR_IN_SECONDS = DAY_IN_SECONDS * 365;
-
 /**
  * The current version of the service worker.
  */
-const SERVICE_WORKER_VERSION = "1.0.0";
+const SERVICE_WORKER_VERSION = "1.0.1";
 
 if (DEBUG_MODE) {
     console.debug(`Service worker version ${SERVICE_WORKER_VERSION} loading...`);
@@ -51,7 +43,7 @@ if (DEBUG_MODE) {
 precacheAndRoute(assetsToCache);
 
 self.addEventListener("message", (event: { data: any; type: any; ports: any }) => {
-    console.trace(event);
+    console.debug(`${componentName}:: Event Received: `, event)
     // TODO define/use correct data type
     if (event && event.data && event.data.type) {
         // return the version of this service worker

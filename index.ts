@@ -26,15 +26,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
 if ('serviceWorker' in navigator) {
     const wb = new Workbox('/sw.js');
-    wb.addEventListener('controlling', (event) => {
-        console.log(event);
-        const message = new MessageChannel();
-        message.port1.onmessage = (event) => {
-            console.log(event);
-        }
-        wb.messageSW(message);
-    });
     wb.addEventListener('message', (event) => {
+        console.debug(event);
         if (event.data.type === 'CACHE_UPDATED') {
             const { updatedURL } = event.data.payload;
 
@@ -42,7 +35,7 @@ if ('serviceWorker' in navigator) {
         }
     });
     wb.register();
-    const swVersion = wb.messageSW({ type: 'GET_VERSION' });
+    const swVersion = wb.messageSW({ type: 'SKIP_WAITING' });
     swVersion.then(message => {
         console.log('Service Worker version:', message);
     });

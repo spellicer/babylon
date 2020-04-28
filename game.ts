@@ -51,7 +51,6 @@ export class Game {
         });
         this.button.onPointerClickObservable.add(() => this.addSphere());
         this.scene.executeWhenReady(() => {
-            console.log("starting render loop");
             this.engine.runRenderLoop(() => {
                 this.scene.render();
             });
@@ -82,17 +81,16 @@ export class Game {
     }
     private importMeshDoc(doc: IMeshDoc) {
         if (doc.meshes) {
-            console.log(`loaded ${doc._id}: ${JSON.stringify(doc.meshes[0].position)}`);
             SceneLoader.ImportMeshAsync(doc._id, `data:application/json,${JSON.stringify(doc)}`, "", this.scene);
         }
     }
     private deleteMeshById(id: string) {
         const mesh = this.scene.getMeshByName(id);
         if (mesh !== null) {
-            console.log(`deleting ${id}`);
+            console.debug(`deleting ${id}`);
             mesh.dispose();
         } else {
-            console.log(`skipping unfound deleted doc ${id}`);
+            console.debug(`skipping unfound deleted doc ${id}`);
         }
     }
     public resize() {
