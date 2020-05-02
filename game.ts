@@ -2,6 +2,7 @@ import { Color3, CubeTexture, DeviceOrientationCamera, Engine, GroundMesh, Mesh,
 import { AdvancedDynamicTexture, Button, Control, Rectangle, TextBlock } from "babylonjs-gui";
 import { Observable, Subject, Subscription } from "rxjs";
 import { uuidv4 } from "./utility";
+import World from "worker-loader!./world";
 
 const IMIN = -512;
 const IMAX = 512;
@@ -26,7 +27,13 @@ export class Game {
     private camera: DeviceOrientationCamera;
     private locationText: TextBlock;
     private button: Button;
+    private world: World;
     constructor(private canvas: HTMLCanvasElement) {
+        this.world = new World();
+        this.world.postMessage({ a: 1 });
+        this.world.onmessage = e => {
+            console.debug(e);
+        }
         this.engine = new Engine(this.canvas, true);
         this.scene = new Scene(this.engine);
         this.ground = MeshBuilder.CreateGroundFromHeightMap(
