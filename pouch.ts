@@ -1,5 +1,5 @@
 import PouchDB from 'pouchdb';
-import { concat, from, fromEvent, merge, Observable, partition, Subscription, Subject } from 'rxjs';
+import { concat, from, fromEvent, merge, Observable, partition, Subject } from 'rxjs';
 import { concatAll, filter, flatMap, map, pluck, tap } from 'rxjs/operators';
 export class Pouch<T> {
     private localDB: PouchDB.Database<T>;

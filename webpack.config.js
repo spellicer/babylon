@@ -8,11 +8,12 @@ webpackConfig = {
         index: './index.ts'
     },
     devServer: {
+        contentBase: false,
         proxy: local,
-        host: '0.0.0.0',
+        host: "localhost",
         disableHostCheck: true,
         https: false,
-        hot: true
+        hot: true,
     },
     plugins: [
         new CopyWebpackPlugin([{ from: "static" }]),
@@ -26,7 +27,11 @@ webpackConfig = {
     },
     module: {
         rules: [
-            { test: /\.tsx?$/, loader: "ts-loader" }
+            { 
+                test: /\.tsx?$/, 
+                loader: "ts-loader",
+                exclude: "/litterbug/",
+             }
         ]
     },
     mode: "development"
