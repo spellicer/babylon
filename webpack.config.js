@@ -3,7 +3,7 @@ const local = require("./webpack.local");
 const WorkboxWebpackPlugin = require("workbox-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
-module.exports = {
+webpackConfig = {
     entry: {
         index: './index.ts'
     },
@@ -16,11 +16,6 @@ module.exports = {
     },
     plugins: [
         new CopyWebpackPlugin([{ from: "static" }]),
-        new WorkboxWebpackPlugin.InjectManifest({
-            swSrc: "./sw.ts",
-            swDest: "sw.js",
-            maximumFileSizeToCacheInBytes: 5242880,
-        }),
     ],
     output: {
         filename: '[name].js',
@@ -36,3 +31,13 @@ module.exports = {
     },
     mode: "development"
 };
+
+if (process.env.NODE_ENV === 'development') {
+    webpackConfig.plugins.push(new WorkboxWebpackPlugin.InjectManifest({
+        swSrc: "./sw.ts",
+        swDest: "sw.js",
+        maximumFileSizeToCacheInBytes: 5242880,
+    }));
+}
+
+module.exports = webpackConfig;

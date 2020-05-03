@@ -1,11 +1,12 @@
 import PouchDB from 'pouchdb';
-import { concat, from, fromEvent, merge, Observable, partition, Subscription } from 'rxjs';
-import { concatAll, filter, flatMap, map, pluck } from 'rxjs/operators';
+import { concat, from, fromEvent, merge, Observable, partition, Subscription, Subject } from 'rxjs';
+import { concatAll, filter, flatMap, map, pluck, tap } from 'rxjs/operators';
 export class Pouch<T> {
-    toImport$: Observable<T>;
-    toDelete$: Observable<string>;
     private localDB: PouchDB.Database<T>;
     private replication: PouchDB.Replication.Sync<T>;
+    toImport$: Observable<T>;
+    toDelete$: Observable<string>;
+    toPut$ = new Subject<T>();
     constructor(localDB: string, remoteDB: string) {
         this.localDB = new PouchDB(localDB);
         this.replication = this.localDB.sync(remoteDB, {
@@ -31,10 +32,8 @@ export class Pouch<T> {
         );
         this.toImport$ = concat(localDoc$, remoteImports$);
         this.toDelete$ = remoteDeletes$.pipe(pluck("id"));
-    }
-    subscribe(toPut$: Observable<T>): Subscription {
-        return toPut$.subscribe(doc => {
-            this.localDB.put(doc);
-        });
+        this.toPut$.pipe(
+            tap(doc => this.localDB.put(doc)),
+        ).subscribe();
     }
 }
