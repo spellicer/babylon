@@ -1,12 +1,13 @@
 import { bindCallback, fromEvent } from "rxjs";
-import { map, tap } from "rxjs/operators";
 import { Workbox } from "workbox-window";
 import { Game, IMeshDoc } from "./game";
 import { Pouch } from "./pouch";
+import { World } from "./world";
 const LOCALDB = "litterbug";
 const REMOTEDB = `${window.location}/litterbug`;
 window.addEventListener("DOMContentLoaded", () => {
-    const game = new Game(<HTMLCanvasElement>document.getElementById("renderCanvas"));
+    const world = new World();
+    const game = new Game(<HTMLCanvasElement>document.getElementById("renderCanvas"), world);
     const pouchDB = new Pouch<IMeshDoc>(LOCALDB, REMOTEDB);
     const resize$ = fromEvent(window, "resize");
     const watchPosition$ = bindCallback((cb: PositionCallback) => {
@@ -14,10 +15,7 @@ window.addEventListener("DOMContentLoaded", () => {
             enableHighAccuracy: true,
             maximumAge: 500
         });
-    })().pipe(
-        tap(console.log),
-        map(position => position.coords),
-    );
+    })();
     pouchDB.toImport$.subscribe(game.toImport$);
     pouchDB.toDelete$.subscribe(game.toDelete$);
     game.toPut$.subscribe(pouchDB.toPut$);

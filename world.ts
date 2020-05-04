@@ -1,25 +1,24 @@
-import { fromEvent } from "rxjs";
-import { tap, map } from "rxjs/operators";
 import { Vector3 } from "babylonjs";
-
-const ctx: Worker = self as any;
-
-export interface ISphereData {
-    id: string;
-    position: Vector3;
+import { fromEvent, Observable } from "rxjs";
+import { filter, map } from "rxjs/operators";
+import Worker from "worker-loader!./world.worker";
+import { ISphereData } from "./sphere";
+export class World {
+    worker: Worker;
+    private dispatch$: Observable<ISphereData>;
+    constructor() {
+        this.worker = new Worker();
+        this.dispatch$ = fromEvent(this.worker, "message").pipe(
+            map(event => (<MessageEvent>event).data),
+        );
+    }
+    getDispatchFor$(id: string) {
+        return this.dispatch$.pipe(
+            filter(sphereData => sphereData.id === id),
+            map(sphereData => sphereData.position),
+        );
+    }
+    registerPosition(id: string, position: Vector3) {
+        this.worker.postMessage({ id, position });
+    }
 }
-const spheres: ISphereData[] = [];
-
-// Respond to message from parent thread
-fromEvent<MessageEvent>(ctx, "message").pipe(
-    map(event => event.data),
-    tap(data => spheres.push(data)),
-).subscribe();
-
-setInterval(() => {
-    spheres.forEach(sphere => {
-        sphere.position.x++;
-        sphere.position.z++;
-        ctx.postMessage(sphere);
-    })
-}, 1000);
