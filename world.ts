@@ -1,24 +1,21 @@
-import { Vector3 } from "babylonjs";
-import { fromEvent, Observable } from "rxjs";
-import { filter, map } from "rxjs/operators";
+import { fromEvent, Subject } from "rxjs";
+import { filter, map, pluck, tap } from "rxjs/operators";
 import Worker from "worker-loader!./world.worker";
-import { ISphereData } from "./sphere";
+import { Sphere } from "./sphere";
 export class World {
-    worker: Worker;
-    private dispatch$: Observable<ISphereData>;
+    private worker: Worker;
+    inRegister$ = new Subject<Sphere>();
     constructor() {
         this.worker = new Worker();
-        this.dispatch$ = fromEvent(this.worker, "message").pipe(
+        const dispatch$ = fromEvent(this.worker, "message").pipe(
             map(event => (<MessageEvent>event).data),
         );
-    }
-    getDispatchFor$(id: string) {
-        return this.dispatch$.pipe(
-            filter(sphereData => sphereData.id === id),
-            map(sphereData => sphereData.position),
-        );
-    }
-    registerPosition(id: string, position: Vector3) {
-        this.worker.postMessage({ id, position });
+        this.inRegister$.pipe(
+            tap(sphere => dispatch$.pipe(
+                filter(sphereData => sphereData.id === sphere.mesh.id),
+                pluck("position"),
+            ).subscribe(sphere.inMoveTo$)),
+            tap(sphere => this.worker.postMessage({ id: sphere.mesh.id, position: sphere.mesh.position })),
+        ).subscribe();
     }
 }

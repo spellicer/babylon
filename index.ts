@@ -7,7 +7,7 @@ const LOCALDB = "litterbug";
 const REMOTEDB = `${window.location}/litterbug`;
 window.addEventListener("DOMContentLoaded", () => {
     const world = new World();
-    const game = new Game(<HTMLCanvasElement>document.getElementById("renderCanvas"), world);
+    const game = new Game(<HTMLCanvasElement>document.getElementById("renderCanvas"));
     const pouchDB = new Pouch<IMeshDoc>(LOCALDB, REMOTEDB);
     const resize$ = fromEvent(window, "resize");
     const watchPosition$ = bindCallback((cb: PositionCallback) => {
@@ -16,11 +16,12 @@ window.addEventListener("DOMContentLoaded", () => {
             maximumAge: 500
         });
     })();
-    pouchDB.toImport$.subscribe(game.toImport$);
-    pouchDB.toDelete$.subscribe(game.toDelete$);
-    game.toPut$.subscribe(pouchDB.toPut$);
-    resize$.subscribe(game.resize$);
-    watchPosition$.subscribe(game.moveTo$);
+    pouchDB.outImport$.subscribe(game.inImport$);
+    pouchDB.outDelete$.subscribe(game.inDelete$);
+    game.outPut$.subscribe(pouchDB.inPut$);
+    game.outRegister$.subscribe(world.inRegister$);
+    resize$.subscribe(game.inResize$);
+    watchPosition$.subscribe(game.inMoveTo$);
 });
 if ("serviceWorker" in navigator && process.env.NODE_ENV !== "development") {
     const wb = new Workbox("/sw.js");

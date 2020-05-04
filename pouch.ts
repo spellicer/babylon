@@ -4,9 +4,9 @@ import { concatAll, filter, flatMap, map, pluck, tap } from 'rxjs/operators';
 export class Pouch<T> {
     private localDB: PouchDB.Database<T>;
     private replication: PouchDB.Replication.Sync<T>;
-    toImport$: Observable<T>;
-    toDelete$: Observable<string>;
-    toPut$ = new Subject<T>();
+    outImport$: Observable<T>;
+    outDelete$: Observable<string>;
+    inPut$ = new Subject<T>();
     constructor(localDB: string, remoteDB: string) {
         this.localDB = new PouchDB(localDB);
         this.replication = this.localDB.sync(remoteDB, {
@@ -30,9 +30,9 @@ export class Pouch<T> {
             map(rows => rows.map(row => row.id).map(id => this.localDB.get(id))),
             flatMap(fetches => merge(...fetches)),
         );
-        this.toImport$ = concat(localDoc$, remoteImports$);
-        this.toDelete$ = remoteDeletes$.pipe(pluck("id"));
-        this.toPut$.pipe(
+        this.outImport$ = concat(localDoc$, remoteImports$);
+        this.outDelete$ = remoteDeletes$.pipe(pluck("id"));
+        this.inPut$.pipe(
             tap(doc => this.localDB.put(doc)),
         ).subscribe();
     }
