@@ -1,7 +1,7 @@
 import { AbstractMesh, Camera, Color3, CubeTexture, DeviceOrientationCamera, Engine, Mesh, MeshBuilder, PointLight, Scene, SceneLoader, StandardMaterial, Texture, Vector3 } from "babylonjs";
 import { AdvancedDynamicTexture, Button, Control, Rectangle, TextBlock } from "babylonjs-gui";
 import { from, merge, Observable, Subject } from "rxjs";
-import { filter, flatMap, map, tap, pluck } from "rxjs/operators";
+import { filter, flatMap, map, pluck, tap } from "rxjs/operators";
 import { Sphere } from "./sphere";
 
 const IMIN = -512;
@@ -19,7 +19,6 @@ export interface IMeshDoc {
 }
 export class Game {
     outPut$: Observable<IMeshDoc>;
-    outRegister$: Observable<Sphere>;
     inImport$ = new Subject<IMeshDoc>();
     inDelete$ = new Subject<string>();
     inResize$ = new Subject<Event>();
@@ -33,13 +32,19 @@ export class Game {
         const scene = this.createScene(engine);
         const ground = this.createGround(scene);
         const camera = this.createCamera(scene, canvas, position => ground.getHeightAtCoordinates(position.x, position.z) || 295);
-        this.createUI(camera, scene, newMeshes$);
+        this.createUI(camera, () => newMeshes$.next(Sphere.factory(scene, camera.position)));
         const loadedMeshes$ = this.inImport$.pipe(
             filter(doc => doc && !!doc.meshes && !!doc._id),
             flatMap(doc => from(SceneLoader.ImportMeshAsync(doc._id, `data:application/json,${JSON.stringify(doc)}`, "", scene, undefined, ".babylon"))),
             filter(importmesh => importmesh && importmesh.meshes && importmesh.meshes.length > 0),
             map(importmesh => importmesh.meshes[0]),
         );
+        this.outPut$ = newMeshes$.pipe(
+            map(mesh => Sphere.serialize(mesh)),
+        );
+        merge(newMeshes$, loadedMeshes$).pipe(
+            map(mesh => new Sphere(mesh, position => ground.getHeightAtCoordinates(position.x, position.z) || 295)),
+        ).subscribe();
         this.inDelete$.pipe(
             tap(id => console.debug(`deleting ${id}`)),
             map(id => scene.getMeshByName(id)),
@@ -51,12 +56,6 @@ export class Game {
             tap(coords => camera.position.x = (coords.longitude - XMIN) / (XMAX - XMIN) * (IMAX - IMIN) + IMIN),
             tap(coords => camera.position.z = (coords.latitude - ZMIN) / (ZMAX - ZMIN) * (JMAX - JMIN) + JMIN),
         ).subscribe();
-        this.outPut$ = newMeshes$.pipe(
-            map(mesh => Sphere.serialize(mesh)),
-        );
-        this.outRegister$ = merge(newMeshes$, loadedMeshes$).pipe(
-            map(mesh => new Sphere(mesh, position => ground.getHeightAtCoordinates(position.x, position.z) || 295)),
-        );
         engine.displayLoadingUI();
         scene.executeWhenReady(() => {
             engine.hideLoadingUI();
@@ -71,9 +70,7 @@ export class Game {
         camera.angularSensibility = 10;
         // Attach the camera to the canvas
         camera.attachControl(canvas, true);
-        camera.onViewMatrixChangedObservable.add(() => {
-            camera.position.y = (getHeight(camera.position) || 295) + 5;
-        });
+        camera.onViewMatrixChangedObservable.add(() => camera.position.y = (getHeight(camera.position) || 295) + 5);
         return camera;
     }
     private createScene(engine: Engine) {
@@ -118,7 +115,7 @@ export class Game {
         ground.material = groundMaterial;
         return ground;
     }
-    private createUI(camera: Camera, scene: Scene, newMeshes$: Subject<AbstractMesh>) {
+    private createUI(camera: Camera, addMesh: () => void) {
         const advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("ui1");
         const label: Rectangle = new Rectangle("location");
         label.background = "black";
@@ -137,9 +134,7 @@ export class Game {
         locationText.fontSize = 30;
         locationText.color = "white";
         label.addControl(locationText);
-        camera.onViewMatrixChangedObservable.add(() => {
-            locationText.text = `${camera.position.x.toFixed(6)}, ${camera.position.y.toFixed(6)}, ${camera.position.z.toFixed(6)}`;
-        });
+        camera.onViewMatrixChangedObservable.add(() => locationText.text = `${camera.position.x.toFixed(6)}, ${camera.position.y.toFixed(6)}, ${camera.position.z.toFixed(6)}`);
 
         const button = Button.CreateSimpleButton("button", "sphere");
         button.width = "33%";
@@ -147,7 +142,7 @@ export class Game {
         button.top = "45%";
         button.zIndex = 10;
         button.color = "white";
-        button.onPointerClickObservable.add(() => newMeshes$.next(Sphere.factory(scene, camera.position)));
+        button.onPointerClickObservable.add(addMesh);
         advancedTexture.addControl(button);
     }
 }

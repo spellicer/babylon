@@ -1,12 +1,13 @@
 import { bindCallback, fromEvent } from "rxjs";
 import { Workbox } from "workbox-window";
+import SphereWorker from "worker-loader!./sphere.worker";
 import { Game, IMeshDoc } from "./game";
 import { Pouch } from "./pouch";
-import { World } from "./world";
+import { Sphere } from "./sphere";
 const LOCALDB = "litterbug";
 const REMOTEDB = `${window.location}/litterbug`;
 window.addEventListener("DOMContentLoaded", () => {
-    const world = new World();
+    Sphere.wireWorker(new SphereWorker());
     const game = new Game(<HTMLCanvasElement>document.getElementById("renderCanvas"));
     const pouchDB = new Pouch<IMeshDoc>(LOCALDB, REMOTEDB);
     const resize$ = fromEvent(window, "resize");
@@ -19,7 +20,6 @@ window.addEventListener("DOMContentLoaded", () => {
     pouchDB.outImport$.subscribe(game.inImport$);
     pouchDB.outDelete$.subscribe(game.inDelete$);
     game.outPut$.subscribe(pouchDB.inPut$);
-    game.outRegister$.subscribe(world.inRegister$);
     resize$.subscribe(game.inResize$);
     watchPosition$.subscribe(game.inMoveTo$);
 });

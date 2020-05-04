@@ -1,6 +1,6 @@
 import { AbstractMesh, Color3, MeshBuilder, Scene, SceneSerializer, StandardMaterial, Vector3 } from "babylonjs";
-import { Subject } from "rxjs";
-import { tap } from "rxjs/operators";
+import { fromEvent, Observable, Subject } from "rxjs";
+import { filter, pluck, tap } from "rxjs/operators";
 import { uuidv4 } from "./utility";
 
 export interface ISphereData {
@@ -9,6 +9,31 @@ export interface ISphereData {
 }
 
 export class Sphere {
+    static outWorker$: Observable<ISphereData>;
+    static inWorker$: Subject<Sphere>;
+    static startWorker(worker: Worker) {
+        const sphereMap = new Map<string, Vector3>();
+        worker.addEventListener("message", event => {
+            sphereMap.set(event.data.id, event.data.position);
+        });
+
+        setInterval(() => {
+            sphereMap.forEach((value, key, map) => {
+                value.x++;
+                value.z++;
+                worker.postMessage({ id: key, position: value });
+            });
+        }, 1000);
+    }
+    static wireWorker(worker: Worker) {
+        Sphere.outWorker$ = fromEvent(worker, "message").pipe(
+            pluck<Event, ISphereData>("data"),
+        );
+        Sphere.inWorker$ = new Subject<Sphere>()
+        Sphere.inWorker$.pipe(
+            tap(sphere => worker.postMessage({ id: sphere.mesh.id, position: sphere.mesh.position })),
+        ).subscribe();
+    }
     static factory(scene: Scene, position: Vector3) {
         const material = new StandardMaterial("sphereMat", scene);
         material.alpha = 1;
@@ -25,15 +50,13 @@ export class Sphere {
         doc._id = mesh.name;
         return doc;
     }
-    static moveAction(position: Vector3) {
-        position.x++;
-        position.z++;
-    }
-    inMoveTo$ = new Subject<Vector3>();
     constructor(public mesh: AbstractMesh, private getHeight: (position: Vector3) => number) {
-        this.inMoveTo$.pipe(
+        Sphere.outWorker$.pipe(
+            filter(sphereData => sphereData.id === mesh.id),
+            pluck("position"),
             tap(position => position.y = this.getHeight(position) + 5),
             tap(position => this.mesh.position.copyFrom(position)),
         ).subscribe();
+        Sphere.inWorker$.next(this);
     }
 }
