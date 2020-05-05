@@ -1,6 +1,7 @@
-import { AbstractMesh, Color3, MeshBuilder, Scene, SceneSerializer, StandardMaterial, Vector3 } from "babylonjs";
+import { AbstractMesh, Color3, MeshBuilder, SceneSerializer, StandardMaterial, Vector3 } from "babylonjs";
 import { fromEvent, Observable, Subject } from "rxjs";
 import { filter, pluck, tap } from "rxjs/operators";
+import { Scene } from "./scene";
 import { uuidv4 } from "./utility";
 
 export interface ISphereData {

@@ -27,11 +27,7 @@ webpackConfig = {
     },
     module: {
         rules: [
-            { 
-                test: /\.tsx?$/, 
-                loader: "ts-loader",
-                exclude: "/litterbug/",
-             }
+            { test: /\.tsx?$/, loader: "ts-loader", exclude: ["/litterbug/"], }
         ]
     },
     mode: "development"
