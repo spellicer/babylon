@@ -12,7 +12,7 @@ export interface ISphereData {
 
 export class Sphere {
     static outWorker$: Observable<ISphereData>;
-    static inWorker$: Subject<Sphere>;
+    static inWorker$: Subject<ISphereData>;
     static startWorker(worker: Worker) {
         const sphereMap = new Map<string, Vector3>();
         worker.addEventListener("message", event => {
@@ -32,33 +32,38 @@ export class Sphere {
             pluck<Event, ISphereData>("data"),
             tap(data => data.position.y = ground.getHeightAtCoordinates(data.position.x, data.position.z) + 2 || 300),
         );
-        Sphere.inWorker$ = new Subject<Sphere>()
-        Sphere.inWorker$.pipe(
-            tap(sphere => worker.postMessage({ id: sphere.mesh.id, position: sphere.mesh.position })),
-        ).subscribe();
+        Sphere.inWorker$ = new Subject<ISphereData>()
+        Sphere.inWorker$.subscribe(message => worker.postMessage(message));
     }
-    static factory(scene: Scene, position: Vector3) {
-        const material = new StandardMaterial("sphereMat", scene);
-        material.alpha = 1;
-        material.diffuseColor = new Color3(Math.random() * 2, Math.random() * 2, Math.random() * 2);
-        material.freeze();
-        const id = uuidv4();
-        const mesh = MeshBuilder.CreateSphere(id, { diameter: 4, segments: 32 }, scene);
-        mesh.material = material;
-        mesh.position.copyFrom(position);
-        return mesh;
-    }
-    static serialize(mesh: AbstractMesh) {
-        const doc = SceneSerializer.SerializeMesh(mesh);
-        doc._id = mesh.name;
-        return doc;
-    }
-    constructor(public mesh: AbstractMesh) {
+    mesh: AbstractMesh;
+    constructor(first: AbstractMesh)
+    constructor(first: Scene, position: Vector3)
+    constructor(first?: AbstractMesh | Scene, position?: Vector3) {
+        if (position && first instanceof Scene) {
+            const material = new StandardMaterial("sphereMat", first);
+            material.alpha = 1;
+            material.diffuseColor = new Color3(Math.random() * 2, Math.random() * 2, Math.random() * 2);
+            material.freeze();
+            const id = uuidv4();
+            const mesh = MeshBuilder.CreateSphere(id, { diameter: 4, segments: 32 }, first);
+            mesh.material = material;
+            mesh.position.copyFrom(position);
+            this.mesh = mesh;
+        } else if (first instanceof AbstractMesh) {
+            this.mesh = first;
+        } else {
+            throw (new Error("Invalid Sphere Construction"));
+        }
         Sphere.outWorker$.pipe(
-            filter(sphereData => sphereData.id === mesh.id),
+            filter(sphereData => sphereData.id === this.mesh.id),
             pluck("position"),
             tap(position => this.mesh.position.copyFrom(position)),
         ).subscribe();
-        Sphere.inWorker$.next(this);
+        Sphere.inWorker$.next({ id: this.mesh.id, position: this.mesh.position });
+    }
+    serialize() {
+        const doc = SceneSerializer.SerializeMesh(this.mesh);
+        doc._id = this.mesh.name;
+        return doc;
     }
 }

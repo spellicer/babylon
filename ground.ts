@@ -62,7 +62,6 @@ export class Ground extends GroundMesh {
                     });
                     vertexData.applyToMesh(this, updatable);
                 }
-                console.log("Ground ready");
                 this._setReady(true);
                 onready();
             },
@@ -73,7 +72,6 @@ export class Ground extends GroundMesh {
             pluck("coords"),
             map(coords => [this.getXFromLongitude(coords.longitude), this.getYFromLatitude(coords.latitude)]),
             map(([x, y]) => new Vector3(x, this.getHeightAtCoordinates(x, y) + 2 || 400, y)),
-            tap(console.log),
         );
     }
     private getXFromLongitude(longitude: number) {

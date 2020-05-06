@@ -1,8 +1,7 @@
-import { Color3, CubeTexture, Engine, GroundMesh, Mesh, MeshBuilder, PointLight, Scene as BabylonScene, SceneLoader, StandardMaterial, Texture, Vector3 } from "babylonjs";
-import { from, merge, Observable, Subject } from "rxjs";
-import { filter, flatMap, map, tap, share } from "rxjs/operators";
+import { Color3, CubeTexture, Engine, Mesh, PointLight, Scene as BabylonScene, SceneLoader, StandardMaterial, Texture, Vector3 } from "babylonjs";
+import { from, Observable, Subject } from "rxjs";
+import { filter, flatMap, map, tap } from "rxjs/operators";
 import { Sphere } from "./sphere";
-import { Ground } from "./ground";
 export interface IMeshDoc {
     _id: string;
     _deleted?: boolean;
@@ -42,21 +41,16 @@ export class Scene extends BabylonScene {
         sun.material = sunMat;
         sun.position = spot.position;
 
-        const newMeshes$ = this.inCreateSphereAt$.pipe(
-            map(position => Sphere.factory(this, position)),
-            share(),
+        this.outPut$ = this.inCreateSphereAt$.pipe(
+            map(position => new Sphere(this, position)),
+            map(sphere => sphere.serialize()),
         );
-        this.outPut$ = newMeshes$.pipe(
-            map(mesh => Sphere.serialize(mesh)),
-        );
-        const loadedMeshes$ = this.inImport$.pipe(
+        this.inImport$.pipe(
             filter(doc => doc && !!doc.meshes && !!doc._id),
             flatMap(doc => from(SceneLoader.ImportMeshAsync(doc._id, `data:application/json,${JSON.stringify(doc)}`, "", this, undefined, ".babylon"))),
             filter(importmesh => importmesh && importmesh.meshes && importmesh.meshes.length > 0),
             map(importmesh => importmesh.meshes[0]),
-        );
-        merge(loadedMeshes$, newMeshes$).pipe(
-            map(mesh => new Sphere(mesh)),
+            tap(mesh => new Sphere(mesh)),
         ).subscribe();
         this.inDelete$.pipe(
             tap(id => console.debug(`deleting ${id}`)),

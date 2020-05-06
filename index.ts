@@ -8,21 +8,17 @@ import { Pouch } from "./pouch";
 import { IMeshDoc, Scene } from "./scene";
 import { Sphere } from "./sphere";
 import { UI } from "./ui";
+const GEOLOCATIONOPTS = {
+    enableHighAccuracy: true,
+    maximumAge: 500,
+    timeout: 5000,
+};
 const LOCALDB = "litterbug";
 const REMOTEDB = `${window.location}/litterbug`;
 window.addEventListener("DOMContentLoaded", () => {
     const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
     const resize$ = fromEvent(window, "resize");
-    const watchPosition$ = fromEventPattern<Position>(cb => {
-        navigator.geolocation.watchPosition(position => {
-            console.log(position);
-            cb(position);
-        }, console.log, {
-            enableHighAccuracy: true,
-            maximumAge: 500,
-            timeout: 5000,
-        });
-    });
+    const watchPosition$ = fromEventPattern<Position>(cb => navigator.geolocation.watchPosition(position => cb, console.log, GEOLOCATIONOPTS));
     const pouchDB = new Pouch<IMeshDoc>(LOCALDB, REMOTEDB);
     const engine = new Engine(canvas);
     engine.displayLoadingUI();

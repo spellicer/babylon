@@ -13,7 +13,7 @@ export class Pouch<T> {
             live: true,
             retry: true
         });
-        const replicationChanges$ = <Observable<PouchDB.Replication.SyncResult<T>>>fromEvent(this.replication, "change");
+        const replicationChanges$ = fromEvent<PouchDB.Replication.SyncResult<T>>(this.replication, "change");
         const remoteDoc$ = replicationChanges$.pipe(
             filter(event => event.direction === "pull"),
             pluck("change", "docs"),
