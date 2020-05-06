@@ -31,7 +31,7 @@ export class Pouch<T> {
             flatMap(fetches => merge(...fetches)),
         );
         this.outImport$ = concat(localDoc$, remoteImports$);
-        this.outDelete$ = remoteDeletes$.pipe(pluck("id"));
+        this.outDelete$ = remoteDeletes$.pipe(pluck("_id"));
         this.inPut$.pipe(
             tap(doc => this.localDB.put(doc)),
         ).subscribe();

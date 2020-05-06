@@ -3,6 +3,7 @@ import { fromEvent, Observable, Subject } from "rxjs";
 import { filter, pluck, tap } from "rxjs/operators";
 import { Scene } from "./scene";
 import { uuidv4 } from "./utility";
+import { Ground } from "./ground";
 
 export interface ISphereData {
     id: string;
@@ -26,9 +27,10 @@ export class Sphere {
             });
         }, 1000);
     }
-    static wireWorker(worker: Worker) {
+    static wireWorker(worker: Worker, ground: Ground) {
         Sphere.outWorker$ = fromEvent(worker, "message").pipe(
             pluck<Event, ISphereData>("data"),
+            tap(data => data.position.y = ground.getHeightAtCoordinates(data.position.x, data.position.z) + 2 || 300),
         );
         Sphere.inWorker$ = new Subject<Sphere>()
         Sphere.inWorker$.pipe(
@@ -51,11 +53,10 @@ export class Sphere {
         doc._id = mesh.name;
         return doc;
     }
-    constructor(public mesh: AbstractMesh, private getHeight: (position: Vector3) => number) {
+    constructor(public mesh: AbstractMesh) {
         Sphere.outWorker$.pipe(
             filter(sphereData => sphereData.id === mesh.id),
             pluck("position"),
-            tap(position => position.y = this.getHeight(position) + 5),
             tap(position => this.mesh.position.copyFrom(position)),
         ).subscribe();
         Sphere.inWorker$.next(this);

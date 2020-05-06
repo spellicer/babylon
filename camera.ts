@@ -1,29 +1,27 @@
 import { DeviceOrientationCamera, Vector3 } from "babylonjs";
 import { fromEventPattern, Observable, Subject } from "rxjs";
-import { map, pluck, tap } from "rxjs/operators";
+import { map } from "rxjs/operators";
 import { Scene } from "./scene";
 
 export class Camera extends DeviceOrientationCamera {
-    inMoveTo$ = new Subject<Position>();
+    inPosition$ = new Subject<Vector3>();
     inCreateSphere$ = new Subject<void>();
     outCreateSphereAt$: Observable<Vector3>;
     outMoved$: Observable<string>;
-    constructor(scene: Scene) {
-        super("DevOr_camera", Vector3.Zero(), scene);
+    constructor(scene: Scene, position: Vector3) {
+        super("DevOr_camera", position, scene);
+        this.ellipsoid = new Vector3(1, 1, 1);
+        this.checkCollisions = true;
+        this.applyGravity = true;
         // Sets the sensitivity of the camera to movement and rotation
-        this.angularSensibility = 10;
+        this.angularSensibility = 1000;
         this.outCreateSphereAt$ = this.inCreateSphere$.pipe(
             map(() => this.position),
         );
         this.outMoved$ = fromEventPattern(cb => this.onViewMatrixChangedObservable.add(cb)).pipe(
-            tap(() => this.position.y = scene.getHeightAtCoordinates(this.position) + 5),
             map(() => this.getPositionString()),
         );
-        this.inMoveTo$.pipe(
-            pluck("coords"),
-            tap(coords => this.position.x = scene.getXFromLongitude(coords.longitude)),
-            tap(coords => this.position.z = scene.getYFromLatitude(coords.latitude)),
-        ).subscribe();
+        this.inPosition$.subscribe(position => this.position = position);
     }
     getPositionString() {
         return `${this.position.x.toFixed(6)}, ${this.position.y.toFixed(6)}, ${this.position.z.toFixed(6)}`;
