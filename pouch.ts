@@ -1,6 +1,6 @@
 import PouchDB from 'pouchdb';
-import { concat, from, fromEvent, merge, Observable, partition, Subject } from 'rxjs';
-import { concatAll, filter, flatMap, map, pluck, tap } from 'rxjs/operators';
+import { concat, from, fromEvent, Observable, partition, Subject } from 'rxjs';
+import { concatMap, filter, map, pluck, tap } from 'rxjs/operators';
 export class Pouch<T> {
     private localDB: PouchDB.Database<T>;
     private replication: PouchDB.Replication.Sync<T>;
@@ -17,18 +17,14 @@ export class Pouch<T> {
         const remoteDoc$ = replicationChanges$.pipe(
             filter(event => event.direction === "pull"),
             pluck("change", "docs"),
-            map(docs => docs.filter(doc => !doc._id.startsWith("_design"))),
-            concatAll(),
+            concatMap(docs => docs),
+            filter(doc => doc._id.startsWith("_design")),
         );
-        const [remoteImports$, remoteDeletes$] = partition(
-            remoteDoc$,
-            doc => !(<any>doc)._deleted
-        );
-        const localDoc$ = from(this.localDB.allDocs()).pipe(
+        const [remoteImports$, remoteDeletes$] = partition(remoteDoc$, doc => !(<any>doc)._deleted);
+        const localDoc$ = from(this.localDB.allDocs({ include_docs: true, startkey: '0' })).pipe(
             pluck("rows"),
-            map(docs => docs.filter(doc => !doc.id.startsWith("_design"))),
-            map(rows => rows.map(row => row.id).map(id => this.localDB.get(id))),
-            flatMap(fetches => merge(...fetches)),
+            concatMap(docs => docs),
+            map(doc => <T>doc.doc),
         );
         this.outImport$ = concat(localDoc$, remoteImports$);
         this.outDelete$ = remoteDeletes$.pipe(pluck("_id"));

@@ -1,7 +1,7 @@
-import { CanvasGenerator, Color3, GroundMesh, StandardMaterial, Texture, Tools, VertexData, Vector3 } from "babylonjs";
+import { CanvasGenerator, Color3, GroundMesh, PhysicsImpostor, StandardMaterial, Tools, Vector3, VertexData } from "babylonjs";
+import { Observable, Subject } from "rxjs";
+import { map, pluck } from "rxjs/operators";
 import { Scene } from "./scene";
-import { Subject, Observable } from "rxjs";
-import { map, pluck, tap } from "rxjs/operators";
 const IMIN = -512;
 const IMAX = 512;
 const JMIN = -512;
@@ -62,6 +62,7 @@ export class Ground extends GroundMesh {
                     });
                     vertexData.applyToMesh(this, updatable);
                 }
+                this.physicsImpostor = new PhysicsImpostor(this, PhysicsImpostor.HeightmapImpostor, { mass: 0 }, scene);
                 this._setReady(true);
                 onready();
             },
@@ -71,7 +72,7 @@ export class Ground extends GroundMesh {
         this.outPosition$ = this.inCoords$.pipe(
             pluck("coords"),
             map(coords => [this.getXFromLongitude(coords.longitude), this.getYFromLatitude(coords.latitude)]),
-            map(([x, y]) => new Vector3(x, this.getHeightAtCoordinates(x, y) + 2 || 400, y)),
+            map(([x, y]) => new Vector3(x, 0, y)),
         );
     }
     private getXFromLongitude(longitude: number) {

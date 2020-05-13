@@ -1,12 +1,13 @@
-import { Engine, Vector3 } from "babylonjs";
+import { Engine } from "babylonjs";
 import { fromEvent, fromEventPattern } from "rxjs";
 import { Workbox } from "workbox-window";
 import SphereWorker from "worker-loader!./sphere.worker";
 import { Camera } from "./camera";
 import { Ground } from "./ground";
 import { Pouch } from "./pouch";
-import { IMeshDoc, Scene } from "./scene";
+import { Scene } from "./scene";
 import { Sphere } from "./sphere";
+import { IMeshDoc, SphereEngine } from "./sphere-engine";
 import { UI } from "./ui";
 const GEOLOCATIONOPTS = {
     enableHighAccuracy: true,
@@ -19,6 +20,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
     const resize$ = fromEvent(window, "resize");
     const watchPosition$ = fromEventPattern<Position>(cb => navigator.geolocation.watchPosition(position => cb, console.log, GEOLOCATIONOPTS));
+    Sphere.wireWorker(new SphereWorker());
     const pouchDB = new Pouch<IMeshDoc>(LOCALDB, REMOTEDB);
     const engine = new Engine(canvas);
     engine.displayLoadingUI();
@@ -26,14 +28,14 @@ window.addEventListener("DOMContentLoaded", () => {
     const scene = new Scene(engine);
     const ui = new UI();
     const ground = new Ground(scene, () => {
-        Sphere.wireWorker(new SphereWorker(), ground);
-        const camera = new Camera(scene, new Vector3(0, ground.getHeightAtCoordinates(0, 0) + 2 || 400, 0));
+        const camera = new Camera(scene, position => ground.getHeightAtCoordinates(position.x, position.z));
         camera.attachControl(canvas, true);
-        scene.outPut$.subscribe(pouchDB.inPut$);
-        pouchDB.outImport$.subscribe(scene.inImport$);
-        pouchDB.outDelete$.subscribe(scene.inDelete$);
+        const sphereEngine = new SphereEngine(scene, ground);
+        sphereEngine.outPut$.subscribe(pouchDB.inPut$);
+        pouchDB.outImport$.subscribe(sphereEngine.inImport$);
+        pouchDB.outDelete$.subscribe(sphereEngine.inDelete$);
         camera.outMoved$.subscribe(ui.inLocationText$);
-        camera.outCreateSphereAt$.subscribe(scene.inCreateSphereAt$);
+        camera.outCreateSphereAt$.subscribe(sphereEngine.inCreateSphereAt$);
         ui.outCreateButton$.subscribe(camera.inCreateSphere$);
         ground.outPosition$.subscribe(camera.inPosition$);
         watchPosition$.subscribe(ground.inCoords$);

@@ -1,21 +1,9 @@
-import { Color3, CubeTexture, Engine, Mesh, PointLight, Scene as BabylonScene, SceneLoader, StandardMaterial, Texture, Vector3 } from "babylonjs";
-import { from, Observable, Subject } from "rxjs";
-import { filter, flatMap, map, tap } from "rxjs/operators";
-import { Sphere } from "./sphere";
-export interface IMeshDoc {
-    _id: string;
-    _deleted?: boolean;
-    meshes: any[];
-}
+import { CannonJSPlugin, Color3, CubeTexture, Engine, Mesh, PointLight, Scene as BabylonScene, StandardMaterial, Texture, Vector3, AbstractMesh } from "babylonjs";
 export class Scene extends BabylonScene {
-    outPut$: Observable<IMeshDoc>;
-    inCreateSphereAt$ = new Subject<Vector3>();
-    inImport$ = new Subject<IMeshDoc>();
-    inDelete$ = new Subject<string>();
     constructor(engine: Engine) {
         super(engine);
         this.collisionsEnabled = true;
-        this.gravity = new Vector3(0, -9.81, 0);
+        this.enablePhysics(new Vector3(0, -9.81, 0), new CannonJSPlugin());
         // Skybox
         const skybox = Mesh.CreateBox("skyBox", 1024, this);
         const skyboxMaterial = new StandardMaterial("skyBox", this);
@@ -40,22 +28,14 @@ export class Scene extends BabylonScene {
         const sun = Mesh.CreateSphere("sun", 10, 4, this);
         sun.material = sunMat;
         sun.position = spot.position;
-
-        this.outPut$ = this.inCreateSphereAt$.pipe(
-            map(position => new Sphere(this, position)),
-            map(sphere => sphere.serialize()),
-        );
-        this.inImport$.pipe(
-            filter(doc => doc && !!doc.meshes && !!doc._id),
-            flatMap(doc => from(SceneLoader.ImportMeshAsync(doc._id, `data:application/json,${JSON.stringify(doc)}`, "", this, undefined, ".babylon"))),
-            filter(importmesh => importmesh && importmesh.meshes && importmesh.meshes.length > 0),
-            map(importmesh => importmesh.meshes[0]),
-            tap(mesh => new Sphere(mesh)),
-        ).subscribe();
-        this.inDelete$.pipe(
-            tap(id => console.debug(`deleting ${id}`)),
-            map(id => this.getMeshByName(id)),
-            tap(mesh => mesh?.dispose()),
-        ).subscribe();
+    }
+    intersects(aMesh: AbstractMesh) {
+        for (let mesh of this.meshes) {
+            if (aMesh.id !== mesh.id && aMesh.intersectsMesh(mesh) && ["ground", "skyBox"].indexOf(mesh.id) < 0) {
+                console.log("intersections", aMesh.id, mesh.id);
+                return true;
+            }
+        }
+        return false;
     }
 }

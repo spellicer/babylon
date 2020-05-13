@@ -2,6 +2,7 @@ const path = require("path");
 const local = require("./webpack.local");
 const WorkboxWebpackPlugin = require("workbox-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
+const webpack = require("webpack");
 
 webpackConfig = {
     entry: {
@@ -17,6 +18,7 @@ webpackConfig = {
     },
     plugins: [
         new CopyWebpackPlugin([{ from: "static" }]),
+        new webpack.ProvidePlugin({ CANNON: "cannon" }),
     ],
     output: {
         filename: '[name].js',
