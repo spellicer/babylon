@@ -22,7 +22,7 @@ export class Sphere {
             sphereMap.forEach((value, key, map) => {
                 value.x++;
                 value.z++;
-                console.log("from worker", key);
+                // console.log("from worker", key);
                 worker.postMessage({ id: key, position: value });
             });
         }, 1000);
@@ -55,7 +55,7 @@ export class Sphere {
         this.mesh.physicsImpostor = new PhysicsImpostor(this.mesh, PhysicsImpostor.SphereImpostor, { mass: 5 }, this.mesh.getScene());
         Sphere.outWorker$.pipe(
             filter(sphereData => sphereData.id === this.mesh.id),
-            tap(sphereData => console.log("from main", sphereData.id)),
+            // tap(sphereData => console.log("from main", sphereData.id)),
             pluck("position"),
             tap(() => this.mesh.physicsImpostor?.applyImpulse(new Vector3(5, 0, 5), this.mesh.getAbsolutePosition())),
         ).subscribe();

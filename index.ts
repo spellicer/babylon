@@ -19,7 +19,7 @@ const REMOTEDB = `${window.location}/litterbug`;
 window.addEventListener("DOMContentLoaded", () => {
     const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
     const resize$ = fromEvent(window, "resize");
-    const watchPosition$ = fromEventPattern<Position>(cb => navigator.geolocation.watchPosition(position => cb, console.log, GEOLOCATIONOPTS));
+    const watchPosition$ = fromEventPattern<Position>(cb => navigator.geolocation.watchPosition(cb, console.log, GEOLOCATIONOPTS));
     Sphere.wireWorker(new SphereWorker());
     const pouchDB = new Pouch<IMeshDoc>(LOCALDB, REMOTEDB);
     const engine = new Engine(canvas);
