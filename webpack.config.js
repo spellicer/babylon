@@ -6,7 +6,7 @@ const webpack = require("webpack");
 
 webpackConfig = {
     entry: {
-        index: './index.ts'
+        index: './src/client/index.ts'
     },
     devServer: {
         contentBase: false,
@@ -22,7 +22,7 @@ webpackConfig = {
     ],
     output: {
         filename: '[name].js',
-        path: path.resolve(__dirname, 'dist')
+        path: path.resolve(__dirname, 'dist', 'client')
     },
     resolve: {
         extensions: [".ts", ".js"]

@@ -7,7 +7,7 @@ import { Ground } from "./ground";
 import { Pouch } from "./pouch";
 import { Scene } from "./scene";
 import { Sphere } from "./sphere";
-import { IMeshDoc, SphereEngine } from "./sphere-engine";
+import { IMeshDoc, SphereEngine } from "./sphere.engine";
 import { UI } from "./ui";
 const GEOLOCATIONOPTS = {
     enableHighAccuracy: true,
