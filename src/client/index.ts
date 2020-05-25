@@ -17,6 +17,13 @@ const GEOLOCATIONOPTS = {
 const LOCALDB = "litterbug";
 const REMOTEDB = `${window.location}/litterbug`;
 window.addEventListener("DOMContentLoaded", () => {
+    const connection = new WebSocket(`ws://${window.location.hostname}:${window.location.port}/websocket`);
+    connection.onopen = () => {
+        connection.send('hey')
+    };
+    connection.onmessage = e => {
+        console.log(e.data)
+    };
     const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
     const resize$ = fromEvent(window, "resize");
     const watchPosition$ = fromEventPattern<Position>(cb => navigator.geolocation.watchPosition(cb, console.log, GEOLOCATIONOPTS));
