@@ -1,4 +1,4 @@
-import { Sphere } from "./sphere";
+import { SphereEngine } from "./sphere.engine";
 
 const ctx: Worker = self as any;
-Sphere.startWorker(ctx);
+SphereEngine.startWorker(ctx);
