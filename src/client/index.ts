@@ -1,33 +1,25 @@
-import { Engine } from "babylonjs";
+import { Engine } from "@babylonjs/core/Engines";
+import "@babylonjs/core/Loading/loadingScreen";
 import { fromEvent, fromEventPattern } from "rxjs";
 import { Workbox } from "workbox-window";
 import SphereWorker from "worker-loader!./sphere.worker";
+import { ISphereData } from "../shared/sphere";
 import { Camera } from "./camera";
 import { Ground } from "./ground";
 import { Pouch } from "./pouch";
 import { Scene } from "./scene";
-import { IMeshDoc, SphereEngine } from "./sphere.engine";
+import { SphereEngine } from "./sphere.engine";
 import { UI } from "./ui";
 const GEOLOCATIONOPTS = {
     enableHighAccuracy: true,
     maximumAge: 500,
     timeout: 5000,
 };
-const LOCALDB = "litterbug";
-const REMOTEDB = `${window.location}/litterbug`;
 window.addEventListener("DOMContentLoaded", () => {
-    const connection = new WebSocket(`ws://${window.location.hostname}:${window.location.port}/websocket`);
-    connection.onopen = () => {
-        connection.send('hey')
-    };
-    connection.onmessage = e => {
-        console.log(e.data)
-    };
     const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
     const resize$ = fromEvent(window, "resize");
     const watchPosition$ = fromEventPattern<Position>(cb => navigator.geolocation.watchPosition(cb, console.log, GEOLOCATIONOPTS));
     SphereEngine.wireWorker(new SphereWorker());
-    const pouchDB = new Pouch<IMeshDoc>(LOCALDB, REMOTEDB);
     const engine = new Engine(canvas);
     engine.displayLoadingUI();
     resize$.subscribe(_ => engine.resize());
@@ -36,6 +28,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const ground = new Ground(scene, () => {
         const camera = new Camera(scene, position => ground.getHeightAtCoordinates(position.x, position.z));
         camera.attachControl(canvas, true);
+        const pouchDB = new Pouch<ISphereData>(`ws://${window.location.hostname}:${window.location.port}/websocket`);
         const sphereEngine = new SphereEngine(scene, ground);
         sphereEngine.outPut$.subscribe(pouchDB.inPut$);
         pouchDB.outImport$.subscribe(sphereEngine.inImport$);
