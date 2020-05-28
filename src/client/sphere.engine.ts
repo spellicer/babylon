@@ -1,15 +1,14 @@
-import { AbstractMesh, SceneLoader, Vector3, SceneSerializer, StandardMaterial, Color3, MeshBuilder } from "babylonjs";
-import { from, merge, Observable, partition, Subject, fromEvent } from "rxjs";
-import { filter, flatMap, map, share, tap, pluck } from "rxjs/operators";
+import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+import { StandardMaterial } from "@babylonjs/core/Materials";
+import { Color3, Vector3 } from "@babylonjs/core/Maths/math";
+import { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
+import "@babylonjs/loaders/glTF";
+import { from, fromEvent, merge, Observable, partition, Subject } from "rxjs";
+import { flatMap, map, pluck, share, tap } from "rxjs/operators";
+import { ISphereData, Sphere, ThreeTuple } from "../shared/sphere";
 import { Ground } from "./ground";
 import { Scene } from "./scene";
-import { Sphere, ISphereData } from "../shared/sphere";
 import { uuidv4 } from "./utility";
-export interface IMeshDoc {
-    _id: string;
-    _deleted?: boolean;
-    meshes: AbstractMesh[];
-}
 export class SphereEngine {
     static outWorker$: Observable<ISphereData>;
     static inWorker$: Subject<ISphereData>;
@@ -37,29 +36,35 @@ export class SphereEngine {
         SphereEngine.inWorker$.subscribe(message => worker.postMessage(message));
     }
     static serialize(mesh: AbstractMesh) {
-        const doc = SceneSerializer.SerializeMesh(mesh);
-        doc._id = mesh.name;
-        return doc;
+        return { id: mesh.id, position: mesh.position.asArray(), color: (mesh.material as StandardMaterial).diffuseColor.asArray() } as ISphereData;
     }
-    static factory(scene: Scene, position: Vector3) {
-        const material = new StandardMaterial("sphereMat", scene);
-        material.alpha = 1;
-        material.diffuseColor = new Color3(Math.random() * 2, Math.random() * 2, Math.random() * 2);
-        material.freeze();
-        const id = uuidv4();
-        const mesh = MeshBuilder.CreateSphere(id, { diameter: 4, segments: 32 }, scene);
-        mesh.material = material;
-        mesh.position.copyFrom(position);
-        return mesh;
+    static factory(scene: Scene, position: Vector3, id?: string, color?: Color3) {
+        const meshId = id || uuidv4();
+        return from(SceneLoader.ImportMeshAsync("", "", "alien.glb", scene)).pipe(
+            tap(importmesh => console.log(importmesh)),
+            map(importmesh => ({
+                importmesh: importmesh, material: Object.assign(new StandardMaterial(`${meshId}-material`, scene), {
+                    alpha: 1,
+                    diffuseColor: color || new Color3(Math.random() * 2, Math.random() * 2, Math.random() * 2),
+                })
+            })),
+            tap(meshmaterial => meshmaterial.importmesh.meshes.forEach(mesh => mesh.material = meshmaterial.material)),
+            map(meshmaterial => meshmaterial.importmesh),
+            tap(importmesh => importmesh.meshes.filter(mesh => mesh.id === "__root__").forEach(mesh => mesh.position.copyFrom(position))),
+            tap(importmesh => importmesh.meshes.filter(mesh => mesh.id === "__root__").forEach(mesh => mesh.name = mesh.id = meshId)),
+            // tap(importmesh => importmesh.meshes[0].position.copyFrom(position)),
+            // tap(importmesh => importmesh.meshes[1].position = Vector3.Zero()),
+            map(importmesh => importmesh.meshes.find(mesh => mesh.id === meshId) as AbstractMesh),
+        );
     }
-    outPut$: Observable<IMeshDoc>;
+    outPut$: Observable<ISphereData>;
     inCreateSphereAt$ = new Subject<Vector3>();
-    inImport$ = new Subject<IMeshDoc>();
+    inImport$ = new Subject<ISphereData>();
     inDelete$ = new Subject<string>();
     constructor(scene: Scene, private ground: Ground) {
         const created$ = this.inCreateSphereAt$.pipe(
             tap(position => this.fixPosition(position)),
-            map(position => SphereEngine.factory(scene, position)),
+            flatMap(position => SphereEngine.factory(scene, position)),
             map(mesh => <[AbstractMesh, boolean]>[mesh, scene.intersects(mesh)]),
             share(),
         );
@@ -69,15 +74,12 @@ export class SphereEngine {
             map(SphereEngine.serialize),
         );
         const imported$ = this.inImport$.pipe(
-            filter(doc => doc && !!doc.meshes && !!doc._id),
-            flatMap(doc => from(SceneLoader.ImportMeshAsync(doc._id, `data:application/json,${JSON.stringify(doc)}`, "", scene, undefined, ".babylon"))),
-            filter(importmesh => importmesh && importmesh.meshes && importmesh.meshes.length > 0),
-            map(importmesh => importmesh.meshes[0]),
-            tap(mesh => this.fixPosition(mesh.position)),
+            tap(doc => doc.position = this.fixPosition(new Vector3(...doc.position)).asArray() as ThreeTuple),
+            flatMap(doc => SphereEngine.factory(scene, new Vector3(...doc.position), doc.id, doc.color ? new Color3(...doc.color) : undefined)),
             map(mesh => <[AbstractMesh, boolean]>[mesh, scene.intersects(mesh)]),
             share(),
         );
-        const [importBad$, importGood$] = partition(imported$, ([mesh, intersects]) => intersects);
+        const [importBad$, importGood$] = partition(imported$, ([mesh, intersects]) => false);
         merge(createdGood$, importGood$).pipe(
             map(([mesh, intersects]) => mesh),
             tap(mesh => new Sphere(mesh, SphereEngine.inWorker$, SphereEngine.outWorker$)),
@@ -90,7 +92,7 @@ export class SphereEngine {
         ).subscribe();
     }
     private fixPosition(position: Vector3) {
-        position.y = this.ground.getHeightAtCoordinates(position.x, position.z) + 3;
+        position.y = this.ground.getHeightAtCoordinates(position.x, position.z) + 10;
         return position;
     }
 }
