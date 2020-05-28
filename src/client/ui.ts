@@ -1,4 +1,4 @@
-import { AdvancedDynamicTexture, Button, Control, Rectangle, TextBlock } from "babylonjs-gui";
+import { AdvancedDynamicTexture, Button, Control, Rectangle, TextBlock } from "@babylonjs/gui";
 import { fromEventPattern, Observable, Subject } from "rxjs";
 
 export class UI {

@@ -1,4 +1,10 @@
-import { CanvasGenerator, Color3, GroundMesh, PhysicsImpostor, StandardMaterial, Tools, Vector3, VertexData } from "babylonjs";
+import { StandardMaterial } from "@babylonjs/core/Materials";
+import { Color3, Vector3 } from "@babylonjs/core/Maths/math";
+import { GroundMesh } from "@babylonjs/core/Meshes/groundMesh";
+import { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
+import { CanvasGenerator } from "@babylonjs/core/Misc";
+import { Tools } from "@babylonjs/core/Misc/tools";
+import { PhysicsImpostor } from "@babylonjs/core/Physics";
 import { Observable, Subject } from "rxjs";
 import { map, pluck } from "rxjs/operators";
 import { Scene } from "./scene";

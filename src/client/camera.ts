@@ -1,4 +1,5 @@
-import { DeviceOrientationCamera, Vector3 } from "babylonjs";
+import { DeviceOrientationCamera } from "@babylonjs/core/Cameras";
+import { Vector3 } from "@babylonjs/core/Maths/math";
 import { fromEventPattern, Observable, Subject } from "rxjs";
 import { map, tap } from "rxjs/operators";
 import { Scene } from "./scene";
