@@ -1,10 +1,12 @@
-import { fromEvent, Observable, partition, Subject } from 'rxjs';
+import { fromEvent, Observable, partition, Subject, merge } from 'rxjs';
 import { map, share, tap } from 'rxjs/operators';
-export class WebSocketAdapter<T> {
+export class WebSocketAdapter {
     private replication: WebSocket;
-    outImport$: Observable<T>;
-    outDelete$: Observable<string>;
-    inPut$ = new Subject<T>();
+    outEvent$: Observable<void>;
+    outObject$: Observable<any>;
+    outString$: Observable<string>;
+    inObject$ = new Subject<any>();
+    inString$ = new Subject<string>();
     constructor(url: string) {
         this.replication = new WebSocket(url);
         const replicationChanges$ = fromEvent(this.replication, "message").pipe(
@@ -17,12 +19,17 @@ export class WebSocketAdapter<T> {
             }),
             share(),
         );
-        [this.outImport$, this.outDelete$] = partition(replicationChanges$, data => typeof (data) !== "string");
-        this.inPut$.pipe(
-            tap(doc => this.replication.send(JSON.stringify(doc))),
-        ).subscribe();
-        fromEvent(this.replication, "open").pipe(
-            tap(() => this.replication.send("hey")),
+        [this.outObject$, this.outString$] = partition(replicationChanges$, data => typeof (data) !== "string");
+        this.outEvent$ = fromEvent(this.replication, "open").pipe(
+            map(() => { }),
+        );
+        merge(
+            this.inObject$.pipe(
+                tap(doc => this.replication.send(JSON.stringify(doc))),
+            ),
+            this.inString$.pipe(
+                tap(doc => this.replication.send(doc)),
+            )
         ).subscribe();
     }
 }

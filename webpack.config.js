@@ -16,6 +16,10 @@ webpackConfig = {
         https: false,
         hot: true,
     },
+    watchOptions: {
+        poll: true,
+        aggregateTimeout: 300,
+    },
     plugins: [
         new CopyWebpackPlugin([{ from: "static" }]),
         new webpack.ProvidePlugin({ CANNON: "cannon" }),

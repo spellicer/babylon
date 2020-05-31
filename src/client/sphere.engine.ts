@@ -1,17 +1,13 @@
-import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
-import { StandardMaterial } from "@babylonjs/core/Materials";
 import { Color3, Vector3 } from "@babylonjs/core/Maths/math";
-import { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import "@babylonjs/loaders/glTF";
-import { from, fromEvent, merge, Observable, partition, Subject } from "rxjs";
-import { flatMap, map, pluck, share, tap } from "rxjs/operators";
-import { ISphereData, Sphere, ThreeTuple } from "./sphere";
+import { fromEvent, merge, Subject } from "rxjs";
+import { map, pluck, share, tap } from "rxjs/operators";
 import { Ground } from "./ground";
 import { Scene } from "./scene";
+import { ISphereData, Sphere } from "./sphere";
 import { uuidv4 } from "./utility";
+import { WebSocketAdapter } from "./web.socket.adapter";
 export class SphereEngine {
-    static outWorker$: Observable<ISphereData>;
-    static inWorker$: Subject<ISphereData>;
     static startWorker(worker: Worker) {
         const sphereMap = new Map<string, Vector3>();
         worker.addEventListener("message", event => {
@@ -22,73 +18,43 @@ export class SphereEngine {
             sphereMap.forEach((value, key, map) => {
                 value.x++;
                 value.z++;
-                // console.log("from worker", key);
                 worker.postMessage({ id: key, position: value });
             });
         }, 1000);
     }
-    static wireWorker(worker: Worker) {
-        SphereEngine.outWorker$ = fromEvent(worker, "message").pipe(
+    inCreateSphereAt$ = new Subject<Vector3>();
+    constructor(worker: Worker, webSocket: WebSocketAdapter, scene: Scene, private ground: Ground) {
+        const outWorker$ = fromEvent(worker, "message").pipe(
             pluck<Event, ISphereData>("data"),
             share(),
         );
-        SphereEngine.inWorker$ = new Subject<ISphereData>()
-        SphereEngine.inWorker$.subscribe(message => worker.postMessage(message));
-    }
-    static serialize(mesh: AbstractMesh) {
-        return { id: mesh.id, position: mesh.position.asArray(), color: (mesh.material as StandardMaterial).diffuseColor.asArray() } as ISphereData;
-    }
-    static factory(scene: Scene, position: Vector3, id?: string, color?: Color3) {
-        const meshId = id || uuidv4();
-        return from(SceneLoader.ImportMeshAsync("", "", "alien.glb", scene)).pipe(
-            tap(importmesh => console.log(importmesh)),
-            map(importmesh => ({
-                importmesh: importmesh, material: Object.assign(new StandardMaterial(`${meshId}-material`, scene), {
-                    alpha: 1,
-                    diffuseColor: color || new Color3(Math.random() * 2, Math.random() * 2, Math.random() * 2),
-                })
-            })),
-            tap(meshmaterial => meshmaterial.importmesh.meshes.forEach(mesh => mesh.material = meshmaterial.material)),
-            map(meshmaterial => meshmaterial.importmesh),
-            tap(importmesh => importmesh.meshes.filter(mesh => mesh.id === "__root__").forEach(mesh => mesh.position.copyFrom(position))),
-            tap(importmesh => importmesh.meshes.filter(mesh => mesh.id === "__root__").forEach(mesh => mesh.name = mesh.id = meshId)),
-            // tap(importmesh => importmesh.meshes[0].position.copyFrom(position)),
-            // tap(importmesh => importmesh.meshes[1].position = Vector3.Zero()),
-            map(importmesh => importmesh.meshes.find(mesh => mesh.id === meshId) as AbstractMesh),
-        );
-    }
-    outPut$: Observable<ISphereData>;
-    inCreateSphereAt$ = new Subject<Vector3>();
-    inImport$ = new Subject<ISphereData>();
-    inDelete$ = new Subject<string>();
-    constructor(scene: Scene, private ground: Ground) {
+        const inWorker$ = new Subject<ISphereData>()
+        inWorker$.subscribe(message => worker.postMessage(message));
         const created$ = this.inCreateSphereAt$.pipe(
-            tap(position => this.fixPosition(position)),
-            flatMap(position => SphereEngine.factory(scene, position)),
-            map(mesh => <[AbstractMesh, boolean]>[mesh, scene.intersects(mesh)]),
-            share(),
+            map(position => ({
+                id: uuidv4(),
+                position: position,
+                color: new Color3(Math.random() * 2, Math.random() * 2, Math.random() * 2),
+            })),
         );
-        const [createdBad$, createdGood$] = partition(created$, ([mesh, intersects]) => intersects);
-        this.outPut$ = createdGood$.pipe(
-            map(([mesh, intersects]) => mesh),
-            map(SphereEngine.serialize),
+        const imported$ = webSocket.outObject$.pipe(
+            map(message => ({
+                id: message.id,
+                position: new Vector3(...message.position),
+                color: new Color3(...message.color),
+            })),
         );
-        const imported$ = this.inImport$.pipe(
-            tap(doc => doc.position = this.fixPosition(new Vector3(...doc.position)).asArray() as ThreeTuple),
-            flatMap(doc => SphereEngine.factory(scene, new Vector3(...doc.position), doc.id, doc.color ? new Color3(...doc.color) : undefined)),
-            map(mesh => <[AbstractMesh, boolean]>[mesh, scene.intersects(mesh)]),
-            share(),
-        );
-        const [importBad$, importGood$] = partition(imported$, ([mesh, intersects]) => false);
-        merge(createdGood$, importGood$).pipe(
-            map(([mesh, intersects]) => mesh),
-            tap(mesh => new Sphere(mesh, SphereEngine.inWorker$, SphereEngine.outWorker$)),
+        merge(created$, imported$).pipe(
+            tap(doc => this.fixPosition(doc.position)),
+            map(doc => new Sphere(doc, scene, inWorker$, outWorker$)),
         ).subscribe();
-        merge(createdBad$, importBad$).subscribe(([mesh, intersects]) => mesh.dispose());
-        this.inDelete$.pipe(
+        webSocket.outString$.pipe(
             tap(id => console.debug(`deleting ${id}`)),
             map(id => scene.getMeshByName(id)),
             tap(mesh => mesh?.dispose()),
+        ).subscribe();
+        webSocket.outEvent$.pipe(
+            tap(() => webSocket.inString$.next("hey")),
         ).subscribe();
     }
     private fixPosition(position: Vector3) {

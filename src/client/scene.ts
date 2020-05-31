@@ -42,7 +42,7 @@ export class Scene extends BabylonScene {
     }
     intersects(aMesh: AbstractMesh) {
         for (let mesh of this.meshes) {
-            if (aMesh.id !== mesh.id && aMesh.intersectsMesh(mesh) && ["ground", "skyBox"].indexOf(mesh.id) < 0) {
+            if (aMesh.id !== mesh.id && aMesh.intersectsMesh(mesh) && ["ground", "skyBox", "sun"].indexOf(mesh.id) < 0) {
                 // console.log("intersections", aMesh.id, mesh.id);
                 return true;
             }
