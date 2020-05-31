@@ -1,6 +1,6 @@
 import { fromEvent, Observable, partition, Subject } from 'rxjs';
 import { map, share, tap } from 'rxjs/operators';
-export class Pouch<T> {
+export class WebSocketAdapter<T> {
     private replication: WebSocket;
     outImport$: Observable<T>;
     outDelete$: Observable<string>;

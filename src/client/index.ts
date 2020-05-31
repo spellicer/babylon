@@ -3,10 +3,10 @@ import "@babylonjs/core/Loading/loadingScreen";
 import { fromEvent, fromEventPattern } from "rxjs";
 import { Workbox } from "workbox-window";
 import SphereWorker from "worker-loader!./sphere.worker";
-import { ISphereData } from "../shared/sphere";
+import { ISphereData } from "./sphere";
 import { Camera } from "./camera";
 import { Ground } from "./ground";
-import { Pouch } from "./pouch";
+import { WebSocketAdapter } from "./web.socket.adapter";
 import { Scene } from "./scene";
 import { SphereEngine } from "./sphere.engine";
 import { UI } from "./ui";
@@ -28,7 +28,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const ground = new Ground(scene, () => {
         const camera = new Camera(scene, position => ground.getHeightAtCoordinates(position.x, position.z));
         camera.attachControl(canvas, true);
-        const pouchDB = new Pouch<ISphereData>(`ws://${window.location.hostname}:${window.location.port}/websocket`);
+        const pouchDB = new WebSocketAdapter<ISphereData>(`ws://${window.location.hostname}:${window.location.port}/websocket`);
         const sphereEngine = new SphereEngine(scene, ground);
         sphereEngine.outPut$.subscribe(pouchDB.inPut$);
         pouchDB.outImport$.subscribe(sphereEngine.inImport$);

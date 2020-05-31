@@ -5,7 +5,7 @@ import { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import "@babylonjs/loaders/glTF";
 import { from, fromEvent, merge, Observable, partition, Subject } from "rxjs";
 import { flatMap, map, pluck, share, tap } from "rxjs/operators";
-import { ISphereData, Sphere, ThreeTuple } from "../shared/sphere";
+import { ISphereData, Sphere, ThreeTuple } from "./sphere";
 import { Ground } from "./ground";
 import { Scene } from "./scene";
 import { uuidv4 } from "./utility";
