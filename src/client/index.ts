@@ -8,7 +8,7 @@ import { Ground } from "./ground";
 import { Scene } from "./scene";
 import { SphereEngine } from "./sphere.engine";
 import { UI } from "./ui";
-import { WebSocketAdapter } from "./web.socket.adapter";
+const socketUrl = `ws://${window.location.hostname}:${window.location.port}/websocket`;
 const GEOLOCATIONOPTS = {
     enableHighAccuracy: true,
     maximumAge: 500,
@@ -25,8 +25,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const scene = new Scene(engine);
     const ui = new UI();
     const ground = new Ground(scene, () => {
-        const webSocket = new WebSocketAdapter(`ws://${window.location.hostname}:${window.location.port}/websocket`);
-        const sphereEngine = new SphereEngine(sphereWorker, webSocket, scene, ground);
+        const sphereEngine = new SphereEngine(sphereWorker, socketUrl, scene, ground);
         const camera = new Camera(scene, position => ground.getHeightAtCoordinates(position.x, position.z));
         camera.attachControl(canvas, true);
         camera.outMoved$.subscribe(ui.inLocationText$);
